@@ -10,7 +10,7 @@ onmessage = function (evt) {
       , json_out = Pointer_stringify(out)
       ;
 
-  	postMessage(JSON.parse(json_out));
+    postMessage(JSON.parse(json_out));
 
   } else { // return GLPK constants
 
