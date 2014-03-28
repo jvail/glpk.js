@@ -1,4 +1,4 @@
 glpk.js
 =======
 
-JavaScript port of GLPK
+JavaScript (emscripten) port of GLPK (GNU Linear Programming Kit)
