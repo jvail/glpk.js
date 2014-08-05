@@ -11,4 +11,4 @@ emcc -02 $ODIR/libglpk_la-avl.o $ODIR/libglpk_la-bfd.o $ODIR/libglpk_la-bfx.o $O
 # seems odd, but..: include cson to avoid messing around with emscripten api
 emcc -02 ../cson/cson_amalgamation_core.c -o cson.bc
 
-em++ -O2 -I../cson -I../glpk-4.53/src -I../glpk-4.53/src/env -I../glpk-4.53/src/misc ../glpk.js.c glpk.bc cson.bc -o glpk.js --pre-js ../pre.js --post-js ../post.js -s EXPORTED_FUNCTIONS="['_do_solve']"
+em++ -O2 -I../cson -I../glpk-4.53/src -I../glpk-4.53/src/env -I../glpk-4.53/src/misc ../glpk.js.c glpk.bc cson.bc -o glpk.js --pre-js ../pre.js --post-js ../post.js -s EXPORTED_FUNCTIONS="['_do_solve']" -s RESERVED_FUNCTION_POINTERS=20

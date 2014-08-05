@@ -36,18 +36,34 @@ Module['glpConstants'] = function () {
 
 };
 
+
 Module['solve'] = function (LP , msg_lev) {
 
-    var json_in = JSON.stringify(LP)
-      , start = new Date().getTime()
-      , out = ccall('do_solve', 'number', ['string', 'number'], [json_in, msg_lev])
-      , end = new Date().getTime()
-      , json_out = Pointer_stringify(out)
-      ;
+  var ret = {
+        time: 0
+      , result: null
+      , cson_error: ''
+    }
+    , json_in = JSON.stringify(LP)
+    , start = new Date().getTime()
+    ;
 
-    return { 
-        time: ((end - start) / 1000)
-      , result: JSON.parse(json_out) 
-    };
+  /* TODO: can't figure out how to pass a char* to c to store JSON and read string from ptr. I am using a cb instead */
+  var cb = Runtime.addFunction(
+    function (rc, out) {
+      var out_str = Pointer_stringify(out);
+      if (rc === 0)
+        ret.result = JSON.parse(out_str);
+      else
+        ret.cson_error = out_str; /* cson error string */
+      ret.time = ((new Date().getTime() - start) / 1000);
+    }
+  );
+
+  ccall('do_solve', 'number', ['string', 'number', 'number'], [json_in, cb, msg_lev])
+
+  Runtime.removeFunction(cb);
+
+  return ret;
 
 };

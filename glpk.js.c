@@ -83,7 +83,7 @@ static int find_col(struct glp_prob *P, const char *name)
 }
 
 
-const char* do_solve(char const *json_in, int msg_lev)
+void do_solve(char const *json_in, void(*cb)(int, const char*), int msg_lev)
 {
   /* create cson from P JSON */
   cson_value *in_val = NULL;
@@ -91,7 +91,7 @@ const char* do_solve(char const *json_in, int msg_lev)
 
   rc = parse_json(&in_val, json_in); 
   if (rc != 0)
-    return cson_rc_string(rc);
+    return cb(rc, cson_rc_string(rc));
 
   /* create cson from lp JSON */
   cson_object *in_obj = cson_value_get_object(in_val);
@@ -260,9 +260,8 @@ const char* do_solve(char const *json_in, int msg_lev)
   std::string json_out = "";
   rc = write_json(cson_object_value(out_obj), &json_out);
   if (rc != 0)
-    return cson_rc_string(rc);
+    return cb(rc, cson_rc_string(rc));
 
-  // printf("%s\n", json_out.c_str());
 
   /* housekeeping */
   glp_delete_prob(P);
@@ -270,7 +269,8 @@ const char* do_solve(char const *json_in, int msg_lev)
   cson_value_free(in_val);
   cson_free_object(out_obj);
 
-  return json_out.c_str();
+  // printf("%s\n", json_out.c_str());
+  cb(0, json_out.c_str());
 
 }
 
