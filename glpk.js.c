@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <prob.h>
 #include <cson_amalgamation_core.h>
 #include <emscripten.h>
@@ -6,6 +7,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 static int my_printfv(char const * fmt, va_list vargs )
 {
@@ -42,7 +44,6 @@ static int cson_data_dest_string(void * state, void const * src, unsigned int n 
 }
 
 
-
 int write_json(const cson_value* val, std::string *str)
 {
   cson_output_opt opt;
@@ -67,6 +68,7 @@ int parse_json(cson_value **val, char const *json)
   return rc;
 }
 
+
 static int find_col(struct glp_prob *P, const char *name)
 {     
   /* find column by its symbolic name */
@@ -85,6 +87,7 @@ static int find_col(struct glp_prob *P, const char *name)
 
 void do_solve(char const *json_in, void(*cb)(int, const char*), int msg_lev)
 {
+
   /* create cson from P JSON */
   cson_value *in_val = NULL;
   int rc = 0;
@@ -99,6 +102,8 @@ void do_solve(char const *json_in, void(*cb)(int, const char*), int msg_lev)
   cson_array *objective_vars_arr = cson_value_get_array(cson_object_get(objective_obj, "vars")); 
   cson_array *subject_arr = cson_value_get_array(cson_object_get(in_obj, "subjectTo")); 
   cson_array *bounds_arr = cson_value_get_array(cson_object_get(in_obj, "bounds")); 
+  cson_array *generals_arr = cson_value_get_array(cson_object_get(in_obj, "generals")); 
+  cson_array *binaries_arr = cson_value_get_array(cson_object_get(in_obj, "binaries")); 
 
   /* declare variables */
   glp_prob *P;
@@ -163,6 +168,39 @@ void do_solve(char const *json_in, void(*cb)(int, const char*), int msg_lev)
 
   }
 
+  /* parse_bounds */
+  for (int k = 0; k < cson_array_length_get(bounds_arr); k++) {
+
+    cson_object* row_obj = cson_value_get_object(cson_array_get(bounds_arr, k));
+    
+    const char* name =  cson_string_cstr(cson_value_get_string(cson_object_get(row_obj, "name")));
+    int type = (int)cson_value_get_integer(cson_object_get(row_obj, "type"));
+    double lb = cson_value_get_double(cson_object_get(row_obj, "lb"));
+    double ub = cson_value_get_double(cson_object_get(row_obj, "ub"));
+
+    j = find_col(P, name);
+    glp_set_col_bnds(P, j, type, lb, ub);
+
+  }  
+
+  /* parse generals */
+  for (int k = 0; k < cson_array_length_get(generals_arr); k++) {
+    
+    const char* name = cson_string_cstr(cson_value_get_string(cson_array_get(generals_arr, k)));
+    j = find_col(P, name);
+    glp_set_col_kind(P, j, GLP_IV);
+
+  }
+
+  /* parse binaries */
+  for (int k = 0; k < cson_array_length_get(binaries_arr); k++) {
+    
+    const char* name = cson_string_cstr(cson_value_get_string(cson_array_get(binaries_arr, k)));
+    j = find_col(P, name);
+    glp_set_col_kind(P, j, GLP_BV);
+
+  }
+
   /* set bounds of variables */ 
   int type;
   double lb, ub;
@@ -185,83 +223,107 @@ void do_solve(char const *json_in, void(*cb)(int, const char*), int msg_lev)
     glp_set_col_bnds(P, j, type, lb, ub);
   }
 
-  /* print some statistics */
-  // xprintf("%d row%s, %d column%s, %d non-zero%s\n",
-  //    P->m, P->m == 1 ? "" : "s", P->n, P->n == 1 ? "" : "s",
-  //    P->nnz, P->nnz == 1 ? "" : "s");
-  // if (glp_get_num_int(P) > 0)
-  // {  int ni = glp_get_num_int(P);
-  //    int nb = glp_get_num_bin(P);
-  //    if (ni == 1)
-  //    {  if (nb == 0)
-  //          xprintf("One variable is integer\n");
-  //       else
-  //          xprintf("One variable is binary\n");
-  //    }
-  //    else
-  //    {  xprintf("%d integer variables, ", ni);
-  //       if (nb == 0)
-  //          xprintf("none");
-  //       else if (nb == 1)
-  //          xprintf("one");
-  //       else if (nb == ni)
-  //          xprintf("all");
-  //       else
-  //          xprintf("%d", nb);
-  //       xprintf(" of which %s binary\n", nb == 1 ? "is" : "are");
-  //    }
-  // }
-
   /* problem data has been successfully read */
   glp_delete_index(P);
   glp_sort_matrix(P);
 
-  /* set parameters */
-  glp_smcp parm;
-  glp_init_smcp(&parm);
-  parm.presolve = GLP_ON;
-  parm.msg_lev = msg_lev;
+  /* TODO: do something with ret */
+  int ret = 0;
 
-  // using parm fails (trap) with optimization: emcc -01 or -02 
-  /* solve problem */
-  glp_simplex(P, &parm);
-  /* recover and display results */
-  double z = glp_get_obj_val(P);
-  // printf("z = %g\n", z);
+  /* write problem in LP format */
+  // EM_ASM(
+  //   FS.mkdir('/out');
+  //   FS.mount(NODEFS, { root: '.' }, '/out');
+  // );
+  // printf("%s %i\n", "write file: ", glp_write_lp(P, NULL, std::string(std::string("/out/") + std::string(prob_name) + std::string(".lp")).c_str()));
 
   /* create return JSON */
   cson_object *out_obj = cson_new_object();
   
-  cson_object *vars_obj = cson_new_object();
-  char const *vars_key = "vars";
-  cson_object_set(out_obj, vars_key, cson_object_value(vars_obj));
+  if (glp_get_num_int(P) || glp_get_num_bin(P)) {
 
-  cson_value *z_val = cson_value_new_double(z);
-  char const *z_key = "z";
-  cson_object_set(out_obj, z_key, z_val);
+    /* set parameters */
+    glp_iocp parm;   
+    glp_init_iocp(&parm);
+    parm.presolve = GLP_ON;
+    parm.msg_lev = msg_lev;
+    /* solve problem */
+    ret = glp_intopt(P, &parm);
+  
+    /* recover and display results */
+    double z = glp_mip_obj_val(P);
+    // printf("z = %g\n", z);
 
-  const char* version = glp_version();
-  cson_value *v_val = cson_value_new_string(version, strlen(version));
-  char const *v_key = "glpk_version";
-  cson_object_set(out_obj, v_key, v_val);  
+    cson_object *vars_obj = cson_new_object();
+    char const *vars_key = "vars";
+    cson_object_set(out_obj, vars_key, cson_object_value(vars_obj));
 
-  cson_value *s_val = cson_value_new_integer(glp_get_status(P));
-  char const *s_key = "status";
-  cson_object_set(out_obj, s_key, s_val);
+    cson_value *z_val = cson_value_new_double(z);
+    char const *z_key = "z";
+    cson_object_set(out_obj, z_key, z_val);
 
-  for (int j = 1; j <  glp_get_num_cols(P) + 1; j++) 
-  {
-    cson_value *val = cson_value_new_double(glp_get_col_prim(P, j));
-    char const *key = glp_get_col_name(P, j);
-    cson_object_set(vars_obj, key, val);
-    // printf("%s = %f\n", glp_get_col_name(P, j), glp_get_col_prim(P, j));
+    const char* version = glp_version();
+    cson_value *v_val = cson_value_new_string(version, strlen(version));
+    char const *v_key = "glpk_version";
+    cson_object_set(out_obj, v_key, v_val);  
+
+    cson_value *s_val = cson_value_new_integer(glp_mip_status(P));
+    char const *s_key = "status";
+    cson_object_set(out_obj, s_key, s_val);
+
+    for (int j = 1; j <  glp_get_num_cols(P) + 1; j++) 
+    {
+      cson_value *val = cson_value_new_double(glp_mip_col_val(P, j));
+      char const *key = glp_get_col_name(P, j);
+      cson_object_set(vars_obj, key, val);
+      // printf("%s = %f\n", glp_get_col_name(P, j), glp_get_col_prim(P, j));
+    }
+  
+  } else {
+
+    /* set parameters */
+    glp_smcp parm;
+    glp_init_smcp(&parm);
+    parm.presolve = GLP_ON;
+    parm.msg_lev = msg_lev;
+    /* solve problem */
+    ret = glp_simplex(P, &parm);
+
+    /* recover and display results */
+    double z = glp_get_obj_val(P);
+    // printf("z = %g\n", z);
+
+    cson_object *vars_obj = cson_new_object();
+    char const *vars_key = "vars";
+    cson_object_set(out_obj, vars_key, cson_object_value(vars_obj));
+
+    cson_value *z_val = cson_value_new_double(z);
+    char const *z_key = "z";
+    cson_object_set(out_obj, z_key, z_val);
+
+    const char* version = glp_version();
+    cson_value *v_val = cson_value_new_string(version, strlen(version));
+    char const *v_key = "glpk_version";
+    cson_object_set(out_obj, v_key, v_val);  
+
+    cson_value *s_val = cson_value_new_integer(glp_get_status(P));
+    char const *s_key = "status";
+    cson_object_set(out_obj, s_key, s_val);
+
+    for (int j = 1; j <  glp_get_num_cols(P) + 1; j++) 
+    {
+      cson_value *val = cson_value_new_double(glp_get_col_prim(P, j));
+      char const *key = glp_get_col_name(P, j);
+      cson_object_set(vars_obj, key, val);
+      // printf("%s = %f\n", glp_get_col_name(P, j), glp_get_col_prim(P, j));
+    }
+
   }
 
   std::string json_out = "";
   rc = write_json(cson_object_value(out_obj), &json_out);
   if (rc != 0)
     return cb(rc, cson_rc_string(rc));
-
 
   /* housekeeping */
   glp_delete_prob(P);
@@ -273,7 +335,6 @@ void do_solve(char const *json_in, void(*cb)(int, const char*), int msg_lev)
   cb(0, json_out.c_str());
 
 }
-
 
 #ifdef __cplusplus
 }
