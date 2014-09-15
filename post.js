@@ -67,3 +67,16 @@ Module['solve'] = function (LP , msg_lev) {
   return ret;
 
 };
+
+/* is worker */
+if (typeof importScripts === 'function') {
+
+  onmessage = function (evt) {
+
+    var input = evt.data;
+    var output = Module.solve(input.lp, input.msg_lev);
+    postMessage(output);
+
+  };
+
+}
