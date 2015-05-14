@@ -1,2 +1,16 @@
 .*
-.o
+*.o
+*.lo
+*.bc
+*.la
+a.out
+a.out.js
+glpk-4.55/Makefile
+glpk-4.55/config.h
+glpk-4.55/config.log
+glpk-4.55/config.status
+glpk-4.55/examples/Makefile
+glpk-4.55/examples/glpsol
+glpk-4.55/libtool
+glpk-4.55/src/Makefile
+glpk-4.55/stamp-h1
