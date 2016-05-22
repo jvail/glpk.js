@@ -20,10 +20,10 @@ PWD=$(shell pwd)
 all: glpk.js
 
 glpk:
-	cd $(PWD)/glpk-4.57; \
+	cd $(PWD)/glpk-4.60; \
 	emconfigure ./configure --host=none-none-none; \
 	emmake make; \
-	find $(PWD)/glpk-4.57/src -type f | grep '\.o\b' | EMCC_DEBUG=1 xargs emcc -O2 -o $(PWD)/glpk.bc # join all .o files
+	find $(PWD)/glpk-4.60/src -type f | grep '\.o\b' | EMCC_DEBUG=1 xargs emcc -O2 -o $(PWD)/glpk.bc # join all .o files
 
 cson.bc:
 	cd $(PWD); \
@@ -33,7 +33,7 @@ cson.bc:
 glpk.js: glpk cson.bc
 	cd $(PWD); \
 	EMDEBUG=1 em++ -O3 --memory-init-file 0 $(EMCC_FLAGS) \
-	-Icson -Iglpk-4.57/src -Iglpk-4.57/src/env -Iglpk-4.57/src/misc glpk.js.c \
+	-Icson -Iglpk-4.60/src -Iglpk-4.60/src/bflib -Iglpk-4.60/src/env -Iglpk-4.60/src/misc glpk.js.c \
 	--pre-js pre.js --post-js post.js  \
 	cson.bc glpk.bc -o glpk.js \
 
