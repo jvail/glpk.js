@@ -1,0 +1,103 @@
+{
+  "name": "mip_with_binaries",
+  "objective": {
+    "direction": 1,
+    "name": "obj",
+    "vars": [
+      {
+        "name": "x1",
+        "coef": -1
+      },
+      {
+        "name": "x2",
+        "coef": -2
+      },
+      {
+        "name": "x3",
+        "coef": 0.1
+      },
+      {
+        "name": "x4",
+        "coef": 3
+      }
+    ]
+  },
+  "subjectTo": [
+    {
+      "name": "c1",
+      "vars": [
+        {
+          "name": "x1",
+          "coef": 1
+        },
+        {
+          "name": "x2",
+          "coef": 1
+        }
+      ],
+      "bnds": {
+        "type": 3,
+        "ub": 5,
+        "lb": 0
+      }
+    },
+    {
+      "name": "c2",
+      "vars": [
+        {
+          "name": "x1",
+          "coef": 2
+        },
+        {
+          "name": "x2",
+          "coef": -1
+        }
+      ],
+      "bnds": {
+        "type": 2,
+        "ub": 0,
+        "lb": 0
+      }
+    },
+    {
+      "name": "c3",
+      "vars": [
+        {
+          "name": "x1",
+          "coef": -1
+        },
+        {
+          "name": "x2",
+          "coef": 3
+        }
+      ],
+      "bnds": {
+        "type": 2,
+        "ub": 0,
+        "lb": 0
+      }
+    },
+    {
+      "name": "c4",
+      "vars": [
+        {
+          "name": "x3",
+          "coef": 1
+        },
+        {
+          "name": "x4",
+          "coef": 1
+        }
+      ],
+      "bnds": {
+        "type": 2,
+        "ub": 0,
+        "lb": 0.5
+      }
+    }
+  ],
+  "binaries": [
+    "x3",
+    "x4"
+  ]
+}

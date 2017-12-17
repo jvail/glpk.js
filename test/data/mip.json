@@ -1,0 +1,110 @@
+{
+  "name": "mip",
+  "objective": {
+    "direction": 2,
+    "name": "obj",
+    "vars": [
+      {
+        "name": "x1",
+        "coef": 1
+      },
+      {
+        "name": "x2",
+        "coef": 2
+      },
+      {
+        "name": "x3",
+        "coef": 3
+      },
+      {
+        "name": "x4",
+        "coef": 1
+      }
+    ]
+  },
+  "subjectTo": [
+    {
+      "name": "c1",
+      "vars": [
+        {
+          "name": "x1",
+          "coef": -1
+        },
+        {
+          "name": "x2",
+          "coef": 1
+        },
+        {
+          "name": "x3",
+          "coef": 1
+        },
+        {
+          "name": "x4",
+          "coef": 10
+        }
+      ],
+      "bnds": {
+        "type": 3,
+        "ub": 20,
+        "lb": 0
+      }
+    },
+    {
+      "name": "c2",
+      "vars": [
+        {
+          "name": "x1",
+          "coef": 1
+        },
+        {
+          "name": "x2",
+          "coef": -3
+        },
+        {
+          "name": "x3",
+          "coef": 1
+        }
+      ],
+      "bnds": {
+        "type": 3,
+        "ub": 30,
+        "lb": 0
+      }
+    },
+    {
+      "name": "c3",
+      "vars": [
+        {
+          "name": "x2",
+          "coef": 1
+        },
+        {
+          "name": "x4",
+          "coef": -3.5
+        }
+      ],
+      "bnds": {
+        "type": 5,
+        "ub": 0,
+        "lb": 0
+      }
+    }
+  ],
+  "bounds": [
+    {
+      "name": "x1",
+      "type": 4,
+      "ub": 40,
+      "lb": 0
+    },
+    {
+      "name": "x4",
+      "type": 4,
+      "ub": 3,
+      "lb": 2
+    }
+  ],
+  "generals": [
+    "x4"
+  ]
+}

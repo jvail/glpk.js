@@ -1,0 +1,55 @@
+{
+  "name": "lp",
+  "objective": {
+    "direction": 2,
+    "name": "obj",
+    "vars": [
+      {
+        "name": "x1",
+        "coef": 0.6
+      },
+      {
+        "name": "x2",
+        "coef": 0.5
+      }
+    ]
+  },
+  "subjectTo": [
+    {
+      "name": "cons1",
+      "vars": [
+        {
+          "name": "x1",
+          "coef": 1
+        },
+        {
+          "name": "x2",
+          "coef": 2
+        }
+      ],
+      "bnds": {
+        "type": 3,
+        "ub": 1,
+        "lb": 0
+      }
+    },
+    {
+      "name": "cons2",
+      "vars": [
+        {
+          "name": "x1",
+          "coef": 3
+        },
+        {
+          "name": "x2",
+          "coef": 1
+        }
+      ],
+      "bnds": {
+        "type": 3,
+        "ub": 2,
+        "lb": 0
+      }
+    }
+  ]
+}

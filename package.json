@@ -1,0 +1,29 @@
+{
+  "name": "glpk.js",
+  "version": "2.0.1",
+  "description": "GLPK JS (emscripten) port for node & browser",
+  "main": "glpk.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "make all",
+    "test": "node test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jvail/glpk.js.git"
+  },
+  "author": "jvail",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/jvail/glpk.js/issues"
+  },
+  "homepage": "https://github.com/jvail/glpk.js#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "almost-equal": "^1.1.0",
+    "glpk": "0.0.12",
+    "tape": "^4.8.0"
+  }
+}
