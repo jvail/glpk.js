@@ -1,11 +1,52 @@
-glpk.js
-=======
+# glpk.js
 
 JavaScript (emscripten) port of GLPK (GNU Linear Programming Kit).
 
-Rather than porting the complete GLPK library (including GLPSOL) this project aims at creating a simple JSON interface to setup and solve LP/MILP with JavaScript. 
+Rather than porting the complete GLPK library (including GLPSOL) this project aims at creating a simple JSON interface to setup and solve LP/MILP with JavaScript.
 
-Example: http://jvail.github.io/dairy.js/
+## Usage
+
+```javascript
+const glpk = require('../glpk.js');
+
+let lp = {
+  name: 'LP',
+  objective: {
+    direction: glpk.GLP_MAX,
+    name: 'obj',
+    vars: [
+      { name: 'x1', coef: 0.6 },
+      { name: 'x2', coef: 0.5 }
+    ]
+  },
+  subjectTo: [
+    {
+      name: 'cons1',
+      vars: [
+        { name: 'x1', coef: 1.0 },
+        { name: 'x2', coef: 2.0 }
+      ],
+      bnds: { type: glpk.GLP_UP, ub: 1.0, lb: 0.0 }
+    },
+    {
+      name: 'cons2',
+      vars: [
+        { name: 'x1', coef: 3.0 },
+        { name: 'x2', coef: 1.0 }
+      ],
+      bnds: { type: glpk.GLP_UP, ub: 2.0, lb: 0.0 }
+    }
+  ]
+};
+
+console.log(
+  glpk.solve(lp, glpk.GPL_MSG_ALL)
+);
+```
+
+## Examples 
+* http://jvail.github.io/dairy.js/
+* https://zalf-lse.github.io/solid-dss/
 
 ## Acknowledgements
 
