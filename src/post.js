@@ -41,6 +41,8 @@ var glp_version = cwrap('glp_version', 'string', []),
 
 this['glpk'] = (function () {
 
+	var DBL_MAX = Number.MAX_VALUE;
+
 	var api = Object.freeze({
 			/* direction: */
 		'GLP_MIN': 1,  /* minimization */
@@ -111,7 +113,7 @@ this['glpk'] = (function () {
 			j = glp_add_cols(P, 1);
 			glp_set_col_name(P, j, name);
 			/* TODO: default bounds? */
-			glp_set_col_bnds(P, j, api.GLP_FX, +api.DBL_MAX, -api.DBL_MAX);
+			glp_set_col_bnds(P, j, api.GLP_FX, +DBL_MAX, -DBL_MAX);
 		}
 		return j;
 
@@ -177,13 +179,13 @@ this['glpk'] = (function () {
 		for (j = 1, jj = glp_get_num_cols(P); j <= jj; j++) {
 			lb = glp_get_col_lb(P, j);
 			ub = glp_get_col_ub(P, j);
-			if (lb === +api.DBL_MAX) lb = 0.0;      	/* default lb */
-			if (ub === -api.DBL_MAX) ub = +api.DBL_MAX; /* default ub */
-			if (lb === -api.DBL_MAX && ub === +api.DBL_MAX)
+			if (lb === +DBL_MAX) lb = 0.0; /* default lb */
+			if (ub === -DBL_MAX) ub = +DBL_MAX; /* default ub */
+			if (lb === -DBL_MAX && ub === +DBL_MAX)
 			  type = api.GLP_FR;
-			else if (ub === +api.DBL_MAX)
+			else if (ub === +DBL_MAX)
 			  type = api.GLP_LO;
-			else if (lb === -api.DBL_MAX)
+			else if (lb === -DBL_MAX)
 			  type = api.GLP_UP;
 			else if (lb !== ub)
 			  type = api.GLP_DB;
