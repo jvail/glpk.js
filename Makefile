@@ -43,7 +43,9 @@ EMCC_FLAGS += -s EXPORTED_FUNCTIONS="[ \
 	'_glp_free_env', \
 	'_glp_write_lp', \
 	'_solve_lp', \
-	'_solve_mip' \
+	'_solve_mip', \
+	'_glp_create_prob', \
+	'_glp_read_mps' \
 	]"
 
 # https://github.com/jsmess/jsmess/blob/master/makefile

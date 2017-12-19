@@ -37,7 +37,9 @@ var glp_version = cwrap('glp_version', 'string', []),
 	glp_free_env = cwrap('glp_free_env', 'number', []),
 	glp_write_lp = cwrap('glp_write_lp', 'number', ['number', 'number', 'string']),
 	solve_lp = cwrap('solve_lp', 'number', ['number', 'number']),
-	solve_mip = cwrap('solve_mip', 'number', ['number', 'number']);
+	solve_mip = cwrap('solve_mip', 'number', ['number', 'number']),
+	glp_create_prob = cwrap('glp_create_prob', 'number', []),
+	glp_read_mps = cwrap('glp_read_mps', 'number', ['number', 'number', 'number', 'string']);
 
 this['glpk'] = (function () {
 
@@ -76,14 +78,16 @@ this['glpk'] = (function () {
 		'GLP_UNBND':  6,  /* solution is unbounded */
 		'version': glp_version(),
 		'write': function (lp) {
-			var name = lp.name + '.lp', P = setup(typeof lp === 'string' ? JSON.parse(lp) : lp);
+			var name = lp.name + '.lp', P = setup(lp), str;
 			glp_write_lp(P, null, name);
+			str = FS.readFile(name, { encoding: 'utf8' });
+			FS.unlink(name);
 			housekeeping(P);
-			return FS.readFile(name, { encoding: 'utf8' });
+			return str;
 		},
-		'solve': function (lp, msg_lev) {
+		'solve': function (lp, msg_lev, file) {
 
-			var P = setup(typeof lp === 'string' ? JSON.parse(lp) : lp),
+			var P = null, start,
 				ret = {
 					name: '',
 					time: 0,
@@ -92,13 +96,22 @@ this['glpk'] = (function () {
 						z: null,
 						status: 1
 					}
-				},
-				start = new Date().getTime();
+				};
 
+			if (file) {
+				P = glp_create_prob();
+				FS.writeFile('lp.mps', lp);
+				glp_read_mps(P, 2 /*GLP_MPS_FILE*/ , null, 'lp.mps');
+				FS.unlink('lp.mps');
+			} else {
+				P = setup(lp);
+			}
+
+			start = new Date().getTime();
 			solve(P, ret.result, msg_lev);
+			ret.time = (new Date().getTime() - start) / 1000;
 
 			ret.name = glp_get_prob_name(P);
-			ret.time = (new Date().getTime() - start) / 1000;
 
 			housekeeping(P);
 
@@ -122,6 +135,7 @@ this['glpk'] = (function () {
 	function setup(lp) {
 
 		var j, jj, ub, lb, type;
+		lp = (typeof lp === 'string' ? JSON.parse(lp) : lp);
 		P = glp_create_prob();
 		glp_erase_prob(P);
 		glp_create_index(P);
