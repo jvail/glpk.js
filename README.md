@@ -40,11 +40,11 @@ let lp = {
 };
 
 console.log(
-  glpk.solve(lp, glpk.GPL_MSG_ALL)
+  glpk.solve(lp, glpk.GLP_MSG_ALL)
 );
 ```
 
-## Examples 
+## Examples
 * http://jvail.github.io/dairy.js/
 * https://zalf-lse.github.io/solid-dss/
 

@@ -50,6 +50,6 @@ let lp = {
 };
 
 console.log(
-	glpk.solve(lp, glpk.GPL_MSG_ALL)
+	glpk.solve(lp, glpk.GLP_MSG_ALL)
 );
 
