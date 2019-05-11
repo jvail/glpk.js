@@ -1,4 +1,4 @@
-GLPK_VERSION = 4.64
+GLPK_VERSION = 4.65
 
 EMCC_FLAGS :=
 EMCC_FLAGS += -s INLINING_LIMIT=50
@@ -49,14 +49,14 @@ EMCC_FLAGS += -s EXPORTED_FUNCTIONS="[ \
 # https://github.com/jsmess/jsmess/blob/master/makefile
 # EMCC_FLAGS += -s TOTAL_MEMORY=16777216      # 16mb
 # EMCC_FLAGS += -s TOTAL_MEMORY=33554432      # 32mb
-EMCC_FLAGS += -s TOTAL_MEMORY=67108864      # 64mb
+# EMCC_FLAGS += -s TOTAL_MEMORY=67108864      # 64mb
 # EMCC_FLAGS += -s TOTAL_MEMORY=134217728     # 128mb
 # EMCC_FLAGS += -s TOTAL_MEMORY=268435456     # 256mb
-# EMCC_FLAGS += -s ALLOW_MEMORY_GROWTH=1
+EMCC_FLAGS += -s ALLOW_MEMORY_GROWTH=1
 
 PWD=$(shell pwd)
 
-all: glpk.bc glpk.js
+all: glpk.bc glpk.js glpk-worker.js
 
 getglpk:
 	cd $(PWD)/src/glpk; \
@@ -78,6 +78,14 @@ glpk.js: src/pre.js src/post.js src/glpk.js.c
 	--pre-js src/pre.js --post-js src/post.js  \
 	bc/glpk.bc src/glpk.js.c -o glpk.js \
 
+glpk-worker.js: src/pre.js src/post-worker.js src/glpk.js.c
+	cd $(PWD); \
+	em++ -O3 --memory-init-file 0 $(EMCC_FLAGS) \
+	-Isrc/glpk/glpk-$(GLPK_VERSION)/src -Isrc/glpk/glpk-$(GLPK_VERSION)/src/bflib \
+	-Isrc/glpk/glpk-$(GLPK_VERSION)/src/env -Isrc/glpk/glpk-$(GLPK_VERSION)/src/misc \
+	--pre-js src/pre.js --post-js src/post-worker.js  \
+	bc/glpk.bc src/glpk.js.c -o glpk-worker.js \
+
 glpk.debug.js: src/pre.js src/post.js src/glpk.js.c
 	cd $(PWD); \
 	EMDEBUG=1 em++ -O0 --memory-init-file 0 $(EMCC_FLAGS) -s ASSERTIONS=1 \
@@ -88,6 +96,9 @@ glpk.debug.js: src/pre.js src/post.js src/glpk.js.c
 
 clean:
 	rm -f $(PWD)/glpk.js;
+	rm -f $(PWD)/glpk.wasm;
+	rm -f $(PWD)/glpk-worker.js;
+	rm -f $(PWD)/glpk-worker.wasm;
 	rm -f $(PWD)/glpk.debug.js;
 	rm -f $(PWD)/bc/glpk.bc;
 

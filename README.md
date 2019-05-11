@@ -1,47 +1,49 @@
 # glpk.js
 
-JavaScript (emscripten) port of GLPK (GNU Linear Programming Kit).
+JavaScript/WebAssembly (emscripten) port of GLPK (GNU Linear Programming Kit).
 
 Rather than porting the complete GLPK library (including GLPSOL) this project aims at creating a simple JSON interface to setup and solve LP/MILP with JavaScript.
 
 ## Usage
 
 ```javascript
-const glpk = require('../glpk.js');
+require('glpk.js').then(glpk => {
 
-let lp = {
-  name: 'LP',
-  objective: {
-    direction: glpk.GLP_MAX,
-    name: 'obj',
-    vars: [
-      { name: 'x1', coef: 0.6 },
-      { name: 'x2', coef: 0.5 }
-    ]
-  },
-  subjectTo: [
-    {
-      name: 'cons1',
+  let lp = {
+    name: 'LP',
+    objective: {
+      direction: glpk.GLP_MAX,
+      name: 'obj',
       vars: [
-        { name: 'x1', coef: 1.0 },
-        { name: 'x2', coef: 2.0 }
-      ],
-      bnds: { type: glpk.GLP_UP, ub: 1.0, lb: 0.0 }
+        { name: 'x1', coef: 0.6 },
+        { name: 'x2', coef: 0.5 }
+      ]
     },
-    {
-      name: 'cons2',
-      vars: [
-        { name: 'x1', coef: 3.0 },
-        { name: 'x2', coef: 1.0 }
-      ],
-      bnds: { type: glpk.GLP_UP, ub: 2.0, lb: 0.0 }
-    }
-  ]
-};
+    subjectTo: [
+      {
+        name: 'cons1',
+        vars: [
+          { name: 'x1', coef: 1.0 },
+          { name: 'x2', coef: 2.0 }
+        ],
+        bnds: { type: glpk.GLP_UP, ub: 1.0, lb: 0.0 }
+      },
+      {
+        name: 'cons2',
+        vars: [
+          { name: 'x1', coef: 3.0 },
+          { name: 'x2', coef: 1.0 }
+        ],
+        bnds: { type: glpk.GLP_UP, ub: 2.0, lb: 0.0 }
+      }
+    ]
+  };
 
-console.log(
-  glpk.solve(lp, glpk.GLP_MSG_ALL)
-);
+  console.log(
+    glpk.solve(lp, glpk.GLP_MSG_ALL)
+  );
+
+});
 ```
 
 ## Examples
