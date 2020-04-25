@@ -1,6 +1,6 @@
 {
   "name": "glpk.js",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "GLPK JS (emscripten) port for node & browser",
   "main": "glpk.js",
   "directories": {
@@ -24,6 +24,8 @@
   "devDependencies": {
     "almost-equal": "^1.1.0",
     "glpk": "git+https://github.com/hgourvest/node-glpk.git",
+    "node": "^11.15.0",
     "tape": "^4.10.1"
-  }
+  },
+  "types": "glpk.d.ts"
 }
