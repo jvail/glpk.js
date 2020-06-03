@@ -5,13 +5,11 @@ interface LP {
         name: string,
         vars: { name: string, coef: number }[]
     },
-    subjectTo: [
-        {
-            name: string,
-            vars: { name: string, coef: number }[],
-            bnds: { type: number, ub: number, lb: number }
-        }[]
-    ],
+    subjectTo: {
+        name: string,
+        vars: { name: string, coef: number }[],
+        bnds: { type: number, ub: number, lb: number }
+    }[],
     binaries?: string[]
 }
 
