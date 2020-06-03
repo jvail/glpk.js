@@ -1,3 +1,4 @@
 
-if (typeof module !== 'undefined') module.exports = initialize;
-if (typeof define === 'function') define(initialize);
+});
+if (typeof module !== 'undefined') module.exports = glpkPromise;
+if (typeof define === 'function') define(glpkPromise);

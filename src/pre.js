@@ -1,5 +1,5 @@
 
-var initialize = new Promise(function (resolve) {
+var glpkPromise = new Promise(function (resolve) {
 
 	Module['preInit'] = [
 		function () {
@@ -248,5 +248,3 @@ var initialize = new Promise(function (resolve) {
 		resolve(this['glpk']);
 
 	}
-
-});
