@@ -48,7 +48,7 @@ require('glpk.js').then(glpk => {
 
 ## Examples
 * http://jvail.github.io/dairy.js/
-* https://zalf-lse.github.io/solid-dss/
+* https://jvail.github.io/solid-dss/
 
 ## Acknowledgements
 
