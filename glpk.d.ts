@@ -14,9 +14,13 @@ interface LP {
 }
 
 interface Result {
-    status: number;
-    z: number;
-    vars: {[key:string]: number}
+    name: string;
+    time: number;
+    result: {
+        status: number;
+        z: number;
+        vars: {[key:string]: number}
+    };
 }
 
 interface GLPK {
