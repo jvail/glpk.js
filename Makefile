@@ -58,7 +58,7 @@ getglpk:
 glpk: getglpk
 	mkdir -p $(PWD)/src/glpk/glpk-$(GLPK_VERSION)/build && \
 	cd $(PWD)/src/glpk/glpk-$(GLPK_VERSION)/build && \
-	emconfigure ../configure && \
+	emconfigure ../configure --disable-shared && \
 	emmake make -j4 \
 
 glpk.js: src/pre.js src/post.js src/glpk.js.c
