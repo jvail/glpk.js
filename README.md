@@ -46,6 +46,22 @@ require('glpk.js').then(glpk => {
 });
 ```
 
+Optionally the "kind of structural variable"
+
+* continuous variable (default)
+* integer variable
+* binary variable
+
+may be specified with an array of variable names:
+
+```javascript
+  /* integer */
+  lp.generals = ["x1", "x2"];
+
+  /* binary */
+  lp.binaries = ["x3", "x4"];
+```
+
 ## Examples
 * http://jvail.github.io/dairy.js/
 * https://jvail.github.io/solid-dss/

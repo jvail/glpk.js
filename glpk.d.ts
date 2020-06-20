@@ -10,7 +10,14 @@ interface LP {
         vars: { name: string, coef: number }[],
         bnds: { type: number, ub: number, lb: number }
     }[],
-    binaries?: string[]
+    bounds?: {
+        name: string,
+        type: number,
+        ub: number,
+        lb: number
+    }[],
+    binaries?: string[],
+    generals?: string[]
 }
 
 interface Result {
@@ -24,13 +31,10 @@ interface Result {
 }
 
 interface GLPK {
+
+    /* direction */
     readonly GLP_MIN: number;  /* minimization */
     readonly GLP_MAX: number;  /* maximization */
-
-    /* kind of structural variable: */
-    readonly GLP_CV: number;  /* continuous variable */
-    readonly GLP_IV: number;  /* integer variable */
-    readonly GLP_BV: number;  /* binary variable */
 
     /* type of auxiliary/structural variable: */
     readonly GLP_FR: number;  /* free (unbounded) variable */

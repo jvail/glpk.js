@@ -52,16 +52,15 @@ var glpkPromise = new Promise(function (resolve) {
 		this['glpk'] = (function () {
 
 			var DBL_MAX = Number.MAX_VALUE;
+			/* kind of structural variable: */
+			var GLP_CV = 1;  /* continuous variable */
+			var GLP_IV = 2;  /* integer variable */
+			var GLP_BV = 3;  /* binary variable */
 
 			var api = Object.freeze({
 				/* direction: */
 				'GLP_MIN': 1,  /* minimization */
 				'GLP_MAX': 2,  /* maximization */
-
-				/* kind of structural variable: */
-				'GLP_CV': 1,  /* continuous variable */
-				'GLP_IV': 2,  /* integer variable */
-				'GLP_BV': 3,  /* binary variable */
 
 				/* type of auxiliary/structural variable: */
 				'GLP_FR': 1,  /* free (unbounded) variable */
@@ -175,13 +174,13 @@ var glpkPromise = new Promise(function (resolve) {
 
 				if (lp.generals) {
 					lp.generals.forEach(function (name) {
-						glp_set_col_kind(P, find_col(P, name), api.GLP_IV);
+						glp_set_col_kind(P, find_col(P, name), GLP_IV);
 					});
 				}
 
 				if (lp.binaries) {
 					lp.binaries.forEach(function (name) {
-						glp_set_col_kind(P, find_col(P, name), api.GLP_BV);
+						glp_set_col_kind(P, find_col(P, name), GLP_BV);
 					});
 				}
 
