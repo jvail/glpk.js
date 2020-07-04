@@ -82,3 +82,4 @@ clean:
 	rm -f $(PWD)/glpk.wasm;
 	rm -f $(PWD)/glpk-worker.js;
 	rm -f $(PWD)/glpk-worker.wasm;
+	rm -rf $(PWD)/src/glpk/glpk-$(GLPK_VERSION)
