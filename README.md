@@ -66,6 +66,17 @@ may be specified with an array of variable names:
 * http://jvail.github.io/dairy.js/
 * https://jvail.github.io/solid-dss/
 
+## Building
+
+### Using docker
+Uses official docker images for [emscripten/emsdk](https://hub.docker.com/r/emscripten/emsdk/tags).
+
+```sh
+make clean
+docker build . -t glpk.js
+docker run -v $PWD:/app glpk.js
+```
+
 ## Acknowledgements
 
 The research leading to these results has received funding from the European Community’s Seventh Framework Programme (FP7/2007–2013) under grant agreement No. FP7-266367 (SOLID).

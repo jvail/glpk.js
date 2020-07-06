@@ -1,0 +1,10 @@
+# IGNORE EVERYTHING
+*
+
+# LIST OF EXCEPTIONS
+!Dockerfile
+!Makefile
+!src/
+
+# RE-IGNORE glpk build
+src/glpk-*/
