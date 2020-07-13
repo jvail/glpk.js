@@ -39,3 +39,4 @@ require('../glpk.js').then(glpkjs => {
 	});
 
 });
+
