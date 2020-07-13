@@ -106,5 +106,9 @@
   ],
   "generals": [
     "x4"
-  ]
+  ],
+  "settings": {
+      "mipGap": 0,
+      "tmLim": 120000
+  }
 }
