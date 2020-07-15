@@ -14,7 +14,12 @@ require('../glpk.js').then(glpkjs => {
 
 			let json = JSON.parse(fs.readFileSync(`${__dirname}/data/${d}.json`).toString());
 			let prob = new glpk.Problem();
-			let z1, z2 = glpkjs.solve(json, glpkjs.GLP_MSG_ERR).result.z;
+			const settings = {
+        msgLev: glpkjs.GLP_MSG_ERR,
+        tmLim: json.settings.tmLim,
+        mipGap: json.settings.mipGap
+      }
+			let z1, z2 = glpkjs.solve(json, settings).result.z;
 
 			prob.readLpSync(`${__dirname}/data/${d}.lp`);
 			prob.scaleSync(glpk.SF_AUTO);

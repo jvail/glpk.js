@@ -1,4 +1,3 @@
-
 var glpkPromise = new Promise(function (resolve) {
 
 	Module['preInit'] = [
@@ -50,7 +49,7 @@ var glpkPromise = new Promise(function (resolve) {
 			glp_free_env = cwrap('glp_free_env', 'number', []),
 			glp_write_lp = cwrap('glp_write_lp', 'number', ['number', 'number', 'string']),
 			solve_lp = cwrap('solve_lp', 'number', ['number', 'number']),
-			solve_mip = cwrap('solve_mip', 'number', ['number', 'number']);
+			solve_mip = cwrap('solve_mip', 'number', ['number', 'number', 'number', 'number']);
 
 		this['glpk'] = (function () {
 
@@ -93,7 +92,7 @@ var glpkPromise = new Promise(function (resolve) {
 					housekeeping(P);
 					return FS.readFile(name, { encoding: 'utf8' });
 				},
-				'solve': function (lp, msg_lev) {
+				'solve': function (lp, settings) {
 
 					var P = setup(typeof lp === 'string' ? JSON.parse(lp) : lp),
 						ret = {
@@ -108,8 +107,7 @@ var glpkPromise = new Promise(function (resolve) {
 						},
 						start = new Date().getTime();
 					
-					const settings = lp.settings
-					solve(P, ret.result, msg_lev, settings);
+					solve(P, ret.result, settings);
 
 					ret.name = glp_get_prob_name(P);
 					ret.time = (new Date().getTime() - start) / 1000;
@@ -216,20 +214,19 @@ var glpkPromise = new Promise(function (resolve) {
 
 			};
 
-			function solve(P, res, msg_lev, settings) {
-
+			function solve(P, res, settings) {
 				var i, ii;
 				
 				// this condition checks if the problem has binary or int columns
 				if (glp_get_num_int(P) || glp_get_num_bin(P)) { 
-					solve_mip(P, msg_lev, settings.mipGap, settings.tmLim);
+					solve_mip(P, settings.msgLev, settings.mipGap, settings.tmLim);
 					res.status = glp_mip_status(P);
 					res.z = glp_mip_obj_val(P);
 					for (i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {
 						res.vars[glp_get_col_name(P, i)] = glp_mip_col_val(P, i);
 					}
 				} else {
-					solve_lp(P, msg_lev);
+					solve_lp(P, settings.msgLev);
 					res.status = glp_get_status(P);
 					res.z = glp_get_obj_val(P);
 					for (i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {
