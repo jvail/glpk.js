@@ -1,3 +1,5 @@
+const _ = require('lodash');
+
 var glpkPromise = new Promise(function (resolve) {
 
 	Module['preInit'] = [
@@ -92,8 +94,14 @@ var glpkPromise = new Promise(function (resolve) {
 					housekeeping(P);
 					return FS.readFile(name, { encoding: 'utf8' });
 				},
-				'solve': function (lp, settings) {
-
+				'solve': function (lp, jsonSettings) {
+					
+					const settings = _.defaults(jsonSettings, {
+							msgLev: 1,
+							tmLim: 120000,
+							mipGap: 0
+					})
+					
 					var P = setup(typeof lp === 'string' ? JSON.parse(lp) : lp),
 						ret = {
 							name: '',
@@ -219,7 +227,7 @@ var glpkPromise = new Promise(function (resolve) {
 				
 				// this condition checks if the problem has binary or int columns
 				if (glp_get_num_int(P) || glp_get_num_bin(P)) { 
-					solve_mip(P, settings.msgLev, settings.mipGap, settings.tmLim);
+					solve_mip(P, settings.msgLev, settings.tmLim, settings.mipGap);
 					res.status = glp_mip_status(P);
 					res.z = glp_mip_obj_val(P);
 					for (i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {

@@ -18,7 +18,7 @@ interface LP {
     }[],
     binaries?: string[],
     generals?: string[],
-    settings?: {}
+    settings?: { mipGap?: number, tmLim?: number, msgLev?: number }
 }
 
 interface Result {
