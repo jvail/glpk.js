@@ -12,11 +12,13 @@ int solve_lp(glp_prob *P, int msg_lev) {
 	return glp_simplex(P, &parm);
 }
 
-int solve_mip(glp_prob *P, int msg_lev) {
+int solve_mip(glp_prob *P, int msg_lev, int tm_lim, double mip_gap) {
 	glp_iocp parm;
 	glp_init_iocp(&parm);
 	parm.presolve = 1;
 	parm.msg_lev = msg_lev;
+	parm.tm_lim = tm_lim;
+	parm.mip_gap = mip_gap;
 	return glp_intopt(P, &parm);
 }
 

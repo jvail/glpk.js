@@ -36356,5 +36356,9 @@
       }
     }
   ],
-  "bounds": []
+  "bounds": [],
+  "settings": {
+      "mipGap": 0,
+      "tmLim": 120000
+  }
 }
