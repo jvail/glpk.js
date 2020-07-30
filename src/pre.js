@@ -94,9 +94,9 @@ var glpkPromise = new Promise(function (resolve) {
 					housekeeping(P);
 					return FS.readFile(name, { encoding: 'utf8' });
 				},
-				'solve': function (lp, jsonSettings) {
+				'solve': function (lp, options) {
 					
-					const settings = _.defaults(jsonSettings, {
+					const settings = _.defaults(options, {
 							msgLev: 1,
 							tmLim: 120000,
 							mipGap: 0
