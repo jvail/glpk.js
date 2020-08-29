@@ -56,6 +56,7 @@ var glpkPromise = new Promise(function (resolve) {
 		this['glpk'] = (function () {
 
 			var DBL_MAX = Number.MAX_VALUE;
+			var INT_MAX = 2147483647 //this is the int_max in C language
 			/* kind of structural variable: */
 			var GLP_CV = 1;  /* continuous variable */
 			var GLP_IV = 2;  /* integer variable */
@@ -94,13 +95,16 @@ var glpkPromise = new Promise(function (resolve) {
 					housekeeping(P);
 					return FS.readFile(name, { encoding: 'utf8' });
 				},
-				'solve': function (lp, options) {
+				'solve': function (lp, opt) {
 					
-					const settings = _.defaults(options, {
-							msgLev: 1,
-							tmLim: 120000,
-							mipGap: 0
-					})
+					const opt_ = opt || lp.options || {};
+					
+					const options = {
+						presolve: typeof opt_.presolve !== 'undefined' ? +(!!opt_.presolve) : 1,
+						msgLev: typeof opt_.msgLev !== 'undefined' ? +opt_.msgLev : api.GLP_MSG_ERR,
+						tmLim: typeof opt_.tmLim !== 'undefined' && +opt_.tmLim >= 0 ? +opt_.tmLim : INT_MAX,
+						mipGap: typeof opt_.mipGap !== 'undefined' && +opt_.mipGap >= 0 ? +opt_.mipGap : 0.0
+					};
 					
 					var P = setup(typeof lp === 'string' ? JSON.parse(lp) : lp),
 						ret = {
@@ -115,7 +119,7 @@ var glpkPromise = new Promise(function (resolve) {
 						},
 						start = new Date().getTime();
 					
-					solve(P, ret.result, settings);
+					solve(P, ret.result, options);
 
 					ret.name = glp_get_prob_name(P);
 					ret.time = (new Date().getTime() - start) / 1000;
@@ -222,19 +226,19 @@ var glpkPromise = new Promise(function (resolve) {
 
 			};
 
-			function solve(P, res, settings) {
+			function solve(P, res, options) {
 				var i, ii;
 				
 				// this condition checks if the problem has binary or int columns
 				if (glp_get_num_int(P) || glp_get_num_bin(P)) { 
-					solve_mip(P, settings.msgLev, settings.tmLim, settings.mipGap);
+					solve_mip(P, options.msgLev, options.tmLim, options.mipGap, options.presolve);
 					res.status = glp_mip_status(P);
 					res.z = glp_mip_obj_val(P);
 					for (i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {
 						res.vars[glp_get_col_name(P, i)] = glp_mip_col_val(P, i);
 					}
 				} else {
-					solve_lp(P, settings.msgLev);
+					solve_lp(P, options.msgLev, options.presolve);
 					res.status = glp_get_status(P);
 					res.z = glp_get_obj_val(P);
 					for (i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {

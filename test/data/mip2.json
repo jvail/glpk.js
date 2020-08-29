@@ -100,7 +100,7 @@
     "x3",
     "x4"
   ],
-  "settings": {
+  "options": {
       "mipGap": 0,
       "tmLim": 120000
   }

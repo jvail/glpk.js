@@ -15,9 +15,9 @@ require('../glpk.js').then(glpkjs => {
 
 			let json = JSON.parse(fs.readFileSync(`${__dirname}/data/${d}.json`).toString());
 			let prob = new glpk.Problem();
-			const settings = json.settings
-			let z1, z2 = glpkjs.solve(json, settings).result.z;
-
+			
+			let z1, z2 = glpkjs.solve(json).result.z;
+			
 			prob.readLpSync(`${__dirname}/data/${d}.lp`);
 			prob.scaleSync(glpk.SF_AUTO);
 			prob.simplexSync({
@@ -43,13 +43,13 @@ require('../glpk.js').then(glpkjs => {
   tape('The time limit should kill the solver before finding optimal solution', { timeout: 99999 }, t => {
     const problem = 'mip2'
     let json = JSON.parse(fs.readFileSync(`${__dirname}/data/${problem}.json`).toString());
-    const settings = _.defaults({tmLim: 1}, json.settings)
+    const options = {tmLim: 1}
     
-    const sol = glpkjs.solve(json, settings);
+    const sol = glpkjs.solve(json, options);
 
-    t.equal(1, sol.result.status, 'solution is undefined')
-    t.equal(0, sol.result.vars.x1, 'the variable has the value of zero')
-    t.equal(0, sol.result.z, 'objective function is zero')
+    t.equal(sol.result.status, 1, 'solution is undefined')
+    t.equal(sol.result.vars.x1, 0, 'the variable has the value of zero')
+    t.equal(sol.result.z, 0, 'objective function is zero')
     
     t.end();
   });

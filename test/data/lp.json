@@ -52,7 +52,7 @@
       }
     }
   ],
-  "settings": {
+  "options": {
       "tmLim": 120000
   }
 }

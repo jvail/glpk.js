@@ -1,5 +1,5 @@
 interface LP {
-    name: string;
+    name: string,
     objective: {
         direction: number,
         name: string,
@@ -18,7 +18,14 @@ interface LP {
     }[],
     binaries?: string[],
     generals?: string[],
-    settings?: { mipGap?: number, tmLim?: number, msgLev?: number }
+    options?: Options
+}
+
+interface Options {
+    mipGap?: number,
+    tmLim?: number,
+    msgLev?: number,
+    presolve?: number
 }
 
 interface Result {
@@ -28,7 +35,7 @@ interface Result {
         status: number;
         z: number;
         vars: {[key:string]: number};
-        cons: {[key:string]: {dual: number}}
+        cons?: {[key:string]: {dual: number}};
     };
 }
 
@@ -62,7 +69,7 @@ interface GLPK {
 
     version(): string;
     write(lp: LP): string;
-    solve(lp: LP, settings: {}): Result
+    solve(lp: LP, options?: Options): Result
 }
 
 export {
