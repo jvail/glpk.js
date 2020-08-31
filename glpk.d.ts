@@ -35,7 +35,7 @@ interface Result {
         status: number;
         z: number;
         vars: {[key:string]: number};
-        cons?: {[key:string]: {dual: number}};
+        cons: {[key:string]: {dual?: number}};
     };
 }
 

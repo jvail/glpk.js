@@ -234,6 +234,7 @@ var glpkPromise = new Promise(function (resolve) {
 					solve_mip(P, options.msgLev, options.tmLim, options.mipGap, options.presolve);
 					res.status = glp_mip_status(P);
 					res.z = glp_mip_obj_val(P);
+					res.cons = {};
 					for (i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {
 						res.vars[glp_get_col_name(P, i)] = glp_mip_col_val(P, i);
 					}
