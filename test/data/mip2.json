@@ -99,5 +99,9 @@
   "binaries": [
     "x3",
     "x4"
-  ]
+  ],
+  "options": {
+      "mipGap": 0,
+      "tmLim": 120000
+  }
 }

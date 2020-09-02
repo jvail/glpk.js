@@ -1,3 +1,4 @@
+const _ = require('lodash');
 
 var glpkPromise = new Promise(function (resolve) {
 
@@ -34,24 +35,28 @@ var glpkPromise = new Promise(function (resolve) {
 			glp_get_num_int = cwrap('glp_get_num_int', 'number', ['number']),
 			glp_get_num_bin = cwrap('glp_get_num_bin', 'number', ['number']),
 			glp_get_num_cols = cwrap('glp_get_num_cols', 'number', ['number']),
+			glp_get_num_rows = cwrap('glp_get_num_rows', 'number', ['number']),
 			glp_init_iocp = cwrap('glp_init_iocp', 'void', ['number']),
 			glp_mip_obj_val = cwrap('glp_mip_obj_val', 'number', ['number']),
 			glp_mip_status = cwrap('glp_mip_status', 'number', ['number']),
 			glp_get_col_name = cwrap('glp_get_col_name', 'string', ['number', 'number']),
+			glp_get_row_name = cwrap('glp_get_row_name', 'string', ['number', 'number']),
 			glp_mip_col_val = cwrap('glp_mip_col_val', 'number', ['number', 'number']),
 			glp_init_smcp = cwrap('glp_init_smcp', 'void', ['number']),
 			glp_get_obj_val = cwrap('glp_get_obj_val', 'number', ['number']),
 			glp_get_status = cwrap('glp_get_status', 'number', ['number']),
 			glp_get_col_prim = cwrap('glp_get_col_prim', 'number', ['number', 'number']),
+			glp_get_row_dual = cwrap('glp_get_row_dual', 'number', ['number', 'number']),
 			glp_delete_prob = cwrap('glp_delete_prob', 'void', ['number']),
 			glp_free_env = cwrap('glp_free_env', 'number', []),
 			glp_write_lp = cwrap('glp_write_lp', 'number', ['number', 'number', 'string']),
 			solve_lp = cwrap('solve_lp', 'number', ['number', 'number']),
-			solve_mip = cwrap('solve_mip', 'number', ['number', 'number']);
+			solve_mip = cwrap('solve_mip', 'number', ['number', 'number', 'number', 'number']);
 
 		this['glpk'] = (function () {
 
 			var DBL_MAX = Number.MAX_VALUE;
+			var INT_MAX = 2147483647 //this is the int_max in C language
 			/* kind of structural variable: */
 			var GLP_CV = 1;  /* continuous variable */
 			var GLP_IV = 2;  /* integer variable */
@@ -90,21 +95,31 @@ var glpkPromise = new Promise(function (resolve) {
 					housekeeping(P);
 					return FS.readFile(name, { encoding: 'utf8' });
 				},
-				'solve': function (lp, msg_lev) {
-
+				'solve': function (lp, opt) {
+					
+					const opt_ = opt || lp.options || {};
+					
+					const options = {
+						presolve: typeof opt_.presolve !== 'undefined' ? +(!!opt_.presolve) : 1,
+						msgLev: typeof opt_.msgLev !== 'undefined' ? +opt_.msgLev : api.GLP_MSG_ERR,
+						tmLim: typeof opt_.tmLim !== 'undefined' && +opt_.tmLim >= 0 ? +opt_.tmLim : INT_MAX,
+						mipGap: typeof opt_.mipGap !== 'undefined' && +opt_.mipGap >= 0 ? +opt_.mipGap : 0.0
+					};
+					
 					var P = setup(typeof lp === 'string' ? JSON.parse(lp) : lp),
 						ret = {
 							name: '',
 							time: 0,
 							result: {
 								vars: {},
+								cons: {},
 								z: null,
 								status: 1
 							}
 						},
 						start = new Date().getTime();
-
-					solve(P, ret.result, msg_lev);
+					
+					solve(P, ret.result, options);
 
 					ret.name = glp_get_prob_name(P);
 					ret.time = (new Date().getTime() - start) / 1000;
@@ -211,23 +226,27 @@ var glpkPromise = new Promise(function (resolve) {
 
 			};
 
-			function solve(P, res, msg_lev) {
-
+			function solve(P, res, options) {
 				var i, ii;
-
-				if (glp_get_num_int(P) || glp_get_num_bin(P)) {
-					solve_mip(P, msg_lev);
+				
+				// this condition checks if the problem has binary or int columns
+				if (glp_get_num_int(P) || glp_get_num_bin(P)) { 
+					solve_mip(P, options.msgLev, options.tmLim, options.mipGap, options.presolve);
 					res.status = glp_mip_status(P);
 					res.z = glp_mip_obj_val(P);
+					res.cons = {};
 					for (i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {
 						res.vars[glp_get_col_name(P, i)] = glp_mip_col_val(P, i);
 					}
 				} else {
-					solve_lp(P, msg_lev);
+					solve_lp(P, options.msgLev, options.presolve);
 					res.status = glp_get_status(P);
 					res.z = glp_get_obj_val(P);
 					for (i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {
 						res.vars[glp_get_col_name(P, i)] = glp_get_col_prim(P, i);
+					}
+					for (i = 1, ii = glp_get_num_rows(P); i < ii + 1; i++) {
+						res.cons[glp_get_row_name(P, i)] = {'dual': glp_get_row_dual(P, i)};
 					}
 				}
 

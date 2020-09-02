@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const tape = require('tape');
 const fs = require('fs');
 const almostEqual = require('almost-equal');
@@ -14,8 +15,9 @@ require('../glpk.js').then(glpkjs => {
 
 			let json = JSON.parse(fs.readFileSync(`${__dirname}/data/${d}.json`).toString());
 			let prob = new glpk.Problem();
-			let z1, z2 = glpkjs.solve(json, glpkjs.GLP_MSG_ERR).result.z;
-
+			
+			let z1, z2 = glpkjs.solve(json).result.z;
+			
 			prob.readLpSync(`${__dirname}/data/${d}.lp`);
 			prob.scaleSync(glpk.SF_AUTO);
 			prob.simplexSync({
@@ -37,6 +39,19 @@ require('../glpk.js').then(glpkjs => {
 		})
 		t.end();
 	});
+  
+  tape('The time limit should kill the solver before finding optimal solution', { timeout: 99999 }, t => {
+    const problem = 'mip2'
+    let json = JSON.parse(fs.readFileSync(`${__dirname}/data/${problem}.json`).toString());
+    const options = {tmLim: 1}
+    
+    const sol = glpkjs.solve(json, options);
+
+    t.equal(sol.result.status, 1, 'solution is undefined')
+    t.equal(sol.result.vars.x1, 0, 'the variable has the value of zero')
+    t.equal(sol.result.z, 0, 'objective function is zero')
+    
+    t.end();
+  });
 
 });
-
