@@ -69,7 +69,7 @@ interface GLPK {
 
     version(): string;  /* GLPK version */
     write(lp: LP): string; /* writes problem data in CPLEX LP */
-    solve(lp: LP, options?: number | Options): Result
+    solve(lp: LP, options?: number | Options): Result /* options is either a glp message level or an options obj */
 }
 
 export {
