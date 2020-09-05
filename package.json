@@ -1,6 +1,6 @@
 {
   "name": "glpk.js",
-  "version": "3.1.2",
+  "version": "3.2.0",
   "description": "GLPK JS (emscripten) port for node & browser",
   "keywords": [
     "LP",
