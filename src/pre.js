@@ -1,5 +1,3 @@
-const _ = require('lodash');
-
 var glpkPromise = new Promise(function (resolve) {
 
 	Module['preInit'] = [
@@ -36,13 +34,11 @@ var glpkPromise = new Promise(function (resolve) {
 			glp_get_num_bin = cwrap('glp_get_num_bin', 'number', ['number']),
 			glp_get_num_cols = cwrap('glp_get_num_cols', 'number', ['number']),
 			glp_get_num_rows = cwrap('glp_get_num_rows', 'number', ['number']),
-			glp_init_iocp = cwrap('glp_init_iocp', 'void', ['number']),
 			glp_mip_obj_val = cwrap('glp_mip_obj_val', 'number', ['number']),
 			glp_mip_status = cwrap('glp_mip_status', 'number', ['number']),
 			glp_get_col_name = cwrap('glp_get_col_name', 'string', ['number', 'number']),
 			glp_get_row_name = cwrap('glp_get_row_name', 'string', ['number', 'number']),
 			glp_mip_col_val = cwrap('glp_mip_col_val', 'number', ['number', 'number']),
-			glp_init_smcp = cwrap('glp_init_smcp', 'void', ['number']),
 			glp_get_obj_val = cwrap('glp_get_obj_val', 'number', ['number']),
 			glp_get_status = cwrap('glp_get_status', 'number', ['number']),
 			glp_get_col_prim = cwrap('glp_get_col_prim', 'number', ['number', 'number']),
@@ -56,7 +52,8 @@ var glpkPromise = new Promise(function (resolve) {
 		this['glpk'] = (function () {
 
 			var DBL_MAX = Number.MAX_VALUE;
-			var INT_MAX = 2147483647 //this is the int_max in C language
+			var INT_MAX = 2147483647;
+
 			/* kind of structural variable: */
 			var GLP_CV = 1;  /* continuous variable */
 			var GLP_IV = 2;  /* integer variable */
@@ -75,50 +72,51 @@ var glpkPromise = new Promise(function (resolve) {
 				'GLP_FX': 5,  /* fixed variable */
 
 				/* message level: */
-				'GLP_MSG_OFF': 0,  /* no output */
-				'GLP_MSG_ERR': 1,  /* warning and error messages only */
-				'GLP_MSG_ON': 2,  /* normal output */
-				'GLP_MSG_ALL': 3,  /* full output */
-				'GLP_MSG_DBG': 4,  /* debug output */
+				'GLP_MSG_OFF': 0,	/* no output */
+				'GLP_MSG_ERR': 1,	/* warning and error messages only */
+				'GLP_MSG_ON': 2,  	/* normal output */
+				'GLP_MSG_ALL': 3,	/* full output */
+				'GLP_MSG_DBG': 4,	/* debug output */
 
 				/* solution status: */
-				'GLP_UNDEF': 1,  /* solution is undefined */
-				'GLP_FEAS': 2,  /* solution is feasible */
-				'GLP_INFEAS': 3,  /* solution is infeasible */
-				'GLP_NOFEAS': 4,  /* no feasible solution exists */
-				'GLP_OPT': 5,  /* solution is optimal */
-				'GLP_UNBND': 6,  /* solution is unbounded */
+				'GLP_UNDEF': 1,  	/* solution is undefined */
+				'GLP_FEAS': 2,  	/* solution is feasible */
+				'GLP_INFEAS': 3,  	/* solution is infeasible */
+				'GLP_NOFEAS': 4,  	/* no feasible solution exists */
+				'GLP_OPT': 5,		/* solution is optimal */
+				'GLP_UNBND': 6,  	/* solution is unbounded */
 				'version': glp_version(),
-				'write': function (lp) {
+				'write': function (lp) {	/* writes problem data in CPLEX LP */
 					var name = lp.name + '.lp', P = setup(typeof lp === 'string' ? JSON.parse(lp) : lp);
 					glp_write_lp(P, null, name);
 					housekeeping(P);
 					return FS.readFile(name, { encoding: 'utf8' });
 				},
 				'solve': function (lp, opt) {
-					
-					const opt_ = opt || lp.options || {};
-					
+
+					const lp_ = typeof lp === 'string' ? JSON.parse(lp) : lp;
+					const opt_ = Number.isInteger(opt) ? { msglev: opt } : opt || lp.options || {};
+
 					const options = {
-						presolve: typeof opt_.presolve !== 'undefined' ? +(!!opt_.presolve) : 1,
-						msgLev: typeof opt_.msgLev !== 'undefined' ? +opt_.msgLev : api.GLP_MSG_ERR,
-						tmLim: typeof opt_.tmLim !== 'undefined' && +opt_.tmLim >= 0 ? +opt_.tmLim : INT_MAX,
-						mipGap: typeof opt_.mipGap !== 'undefined' && +opt_.mipGap >= 0 ? +opt_.mipGap : 0.0
+						presol: typeof opt_.presol !== 'undefined' ? +(!!opt_.presol) : 1,
+						msglev: typeof opt_.msglev !== 'undefined' ? +opt_.msglev : api.GLP_MSG_ERR,
+						tmlim: typeof opt_.tmlim !== 'undefined' && +opt_.tmlim >= 0 ? +opt_.tmlim * 1000 : INT_MAX,
+						mipgap: typeof opt_.mipgap !== 'undefined' && +opt_.mipgap >= 0 ? +opt_.mipgap : 0.0
 					};
-					
-					var P = setup(typeof lp === 'string' ? JSON.parse(lp) : lp),
+
+					var P = setup(lp_),
 						ret = {
 							name: '',
 							time: 0,
 							result: {
 								vars: {},
-								cons: {},
+								dual: {},
 								z: null,
 								status: 1
 							}
 						},
 						start = new Date().getTime();
-					
+
 					solve(P, ret.result, options);
 
 					ret.name = glp_get_prob_name(P);
@@ -226,27 +224,27 @@ var glpkPromise = new Promise(function (resolve) {
 
 			};
 
-			function solve(P, res, options) {
+			function solve(P, ret, opt) {
 				var i, ii;
-				
+
 				// this condition checks if the problem has binary or int columns
-				if (glp_get_num_int(P) || glp_get_num_bin(P)) { 
-					solve_mip(P, options.msgLev, options.tmLim, options.mipGap, options.presolve);
-					res.status = glp_mip_status(P);
-					res.z = glp_mip_obj_val(P);
-					res.cons = {};
+				if (glp_get_num_int(P) || glp_get_num_bin(P)) {
+					solve_mip(P, opt.msglev, opt.tmlim, opt.presol, opt.mipgap);
+					ret.status = glp_mip_status(P);
+					ret.z = glp_mip_obj_val(P);
 					for (i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {
-						res.vars[glp_get_col_name(P, i)] = glp_mip_col_val(P, i);
+						ret.vars[glp_get_col_name(P, i)] = glp_mip_col_val(P, i);
 					}
+					delete ret.dual;
 				} else {
-					solve_lp(P, options.msgLev, options.presolve);
-					res.status = glp_get_status(P);
-					res.z = glp_get_obj_val(P);
+					solve_lp(P, opt.msglev, opt.tmlim, opt.presol);
+					ret.status = glp_get_status(P);
+					ret.z = glp_get_obj_val(P);
 					for (i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {
-						res.vars[glp_get_col_name(P, i)] = glp_get_col_prim(P, i);
+						ret.vars[glp_get_col_name(P, i)] = glp_get_col_prim(P, i);
 					}
 					for (i = 1, ii = glp_get_num_rows(P); i < ii + 1; i++) {
-						res.cons[glp_get_row_name(P, i)] = {'dual': glp_get_row_dual(P, i)};
+						ret.dual[glp_get_row_name(P, i)] = glp_get_row_dual(P, i);
 					}
 				}
 

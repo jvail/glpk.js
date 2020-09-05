@@ -40,7 +40,10 @@
                 ],
                 bnds: { type: 3, ub: 2.0, lb: 0.0 }
               }
-            ]
+            ],
+            options: {
+              msglev: 4
+            }
           });
         }
         window.document.getElementById('out').innerHTML = JSON.stringify(evt.data, null, 2);

@@ -31,13 +31,11 @@ EMCC_FLAGS += -s EXPORTED_FUNCTIONS="[ \
 	'_glp_get_num_bin', \
 	'_glp_get_num_cols', \
 	'_glp_get_num_rows', \
-	'_glp_init_iocp', \
 	'_glp_mip_obj_val', \
 	'_glp_mip_status', \
 	'_glp_get_col_name', \
 	'_glp_get_row_name', \
 	'_glp_mip_col_val', \
-	'_glp_init_smcp', \
 	'_glp_get_obj_val', \
 	'_glp_get_status', \
 	'_glp_get_col_prim', \
