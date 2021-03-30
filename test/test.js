@@ -1,7 +1,6 @@
 const tape = require('tape');
 const fs = require('fs');
 const almostEqual = require('almost-equal');
-// const glpk = require('glpk');
 
 require('../glpk.js').then(glpkjs => {
 
