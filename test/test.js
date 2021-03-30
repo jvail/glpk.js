@@ -1,41 +1,21 @@
 const tape = require('tape');
 const fs = require('fs');
 const almostEqual = require('almost-equal');
-const glpk = require('glpk');
+// const glpk = require('glpk');
 
 require('../glpk.js').then(glpkjs => {
 
     tape('test LP/MIP & compare against native node-glpk', { timeout: 99999 }, t => {
         [
-            'lp',
-            'diet_large',
-            'mip',
-            'mip2'
-        ].map(d => {
-
-            let json = JSON.parse(fs.readFileSync(`${__dirname}/data/${d}.json`).toString());
-            let prob = new glpk.Problem();
-
-            let z1, z2 = glpkjs.solve(json, glpkjs.GLP_MSG_ALL).result.z;
-
-            prob.readLpSync(`${__dirname}/data/${d}.lp`);
-            prob.scaleSync(glpk.SF_AUTO);
-            prob.simplexSync({
-                presolve: glpk.ON,
-                msgLev: glpk.MSG_ERR
-            });
-            if (prob.getNumInt() > 0) {
-                prob.intoptSync();
-                z1 = prob.mipObjVal();
-            } else {
-                z1 = prob.getObjVal()
-            }
-            prob.delete();
-
-            return [z1, z2, d];
-
-        }).forEach(z => {
-            t.ok(almostEqual(z[0], z[1], almostEqual.FLT_EPSILON), z[2]);
+            ['lp', 0.45999999999999996],
+            ['diet_large', -500.37199169354767],
+            ['mip', 122.5],
+            ['mip2', -8.233333333333334]
+        ].forEach((d) => {
+            const [problemName, expectedSolution] = d
+            const json = JSON.parse(fs.readFileSync(`${__dirname}/data/${problemName}.json`).toString());
+            const z = glpkjs.solve(json, glpkjs.GLP_MSG_ERR).result.z;
+            t.ok(almostEqual(z, expectedSolution, almostEqual.FLT_EPSILON), `Solved ${problemName}`);
         })
         t.end();
     });
