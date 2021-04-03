@@ -1,4 +1,4 @@
-GLPK_VERSION = 4.65
+GLPK_VERSION = 5.0
 
 EMCC_FLAGS :=
 # access emcc settings through Runtime.compilerSettings or Runtime.getCompilerSetting(name)
