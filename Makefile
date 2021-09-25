@@ -57,6 +57,7 @@ PWD=$(shell pwd)
 all: glpk js
 
 glpk:
+	mkdir -p src/.build; \
 	cd $(PWD)/src/glpk && \
 	autoreconf -fi && \
 	emconfigure ./configure --disable-shared && \
