@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta content="">
+        <style></style>
+    </head>
+    <body>
+        <script type="module">
+            import GLPK from '../dist/index.js';
+            (async () => {
+
+                const glpk = await GLPK();
+
+                function print(res) {
+                    const el = window.document.getElementById('out');
+                    el.innerHTML = JSON.stringify(res, null, 2);
+                };
+
+                const lp = {
+                    name: 'LP',
+                    objective: {
+                        direction: 2,
+                        name: 'obj',
+                        vars: [
+                        { name: 'x1', coef: 0.6 },
+                        { name: 'x2', coef: 0.5 }
+                        ]
+                    },
+                    subjectTo: [
+                        {
+                        name: 'cons1',
+                        vars: [
+                            { name: 'x1', coef: 1.0 },
+                            { name: 'x2', coef: 2.0 }
+                        ],
+                        bnds: { type: 3, ub: 1.0, lb: 0.0 }
+                        },
+                        {
+                        name: 'cons2',
+                        vars: [
+                            { name: 'x1', coef: 3.0 },
+                            { name: 'x2', coef: 1.0 }
+                        ],
+                        bnds: { type: 3, ub: 2.0, lb: 0.0 }
+                        }
+                    ],
+                    options: {
+                        msglev: 4
+                    }
+                };
+
+                const opt = {
+                    cb: {
+                        call: res => print(res),
+                        each: 1
+                    }
+                };
+
+                glpk.solve(lp, opt)
+                    .then(res => print(res))
+                    .catch(err => console.log(err));
+
+                console.log(await glpk.solve(lp, glpk.GLP_MSG_DBG));
+
+                window.document.getElementById('cplex').innerHTML = await glpk.write(lp);
+
+            })();
+        </script>
+        <pre id='out'></pre>
+        <pre id='cplex'></pre>
+    </body>
+</html>
