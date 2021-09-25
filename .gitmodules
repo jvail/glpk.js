@@ -1,0 +1,3 @@
+[submodule "src/glpk"]
+	path = src/glpk
+	url = https://salsa.debian.org/science-team/glpk.git

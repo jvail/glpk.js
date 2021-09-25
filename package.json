@@ -1,7 +1,7 @@
 {
   "name": "glpk.js",
-  "version": "3.2.0",
-  "description": "GLPK JS (emscripten) port for node & browser",
+  "version": "4.0.0",
+  "description": "GLPK for node & browser",
   "keywords": [
     "LP",
     "MILP",
@@ -9,28 +9,39 @@
     "linear programming",
     "linear optimization"
   ],
-  "main": "glpk.js",
+  "main": "dist/glpk.js",
+  "browser": "dist/index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "build": "make all",
+    "build": "npm run build:em && npm run build:js",
+    "build:em": "make all",
+    "build:js": "rollup -c rollup.config.js --worker && node src/pack.js && rollup -c rollup.config.js",
+    "clean": "make clean",
     "test": "node test/test.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jvail/glpk.js.git"
   },
-  "author": "jvail",
+  "author": "Jan Vaillant",
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/jvail/glpk.js/issues"
   },
   "homepage": "https://github.com/jvail/glpk.js#readme",
-  "dependencies": {},
-  "devDependencies": {
-    "almost-equal": "^1.1.0",
-    "tape": "^4.10.1"
+  "dependencies": {
+    "pako": "^2.0.4"
   },
-  "types": "glpk.d.ts"
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^20.0.0",
+    "@rollup/plugin-node-resolve": "^13.0.5",
+    "almost-equal": "^1.1.0",
+    "rollup": "^2.57.0",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "tape": "^5.3.1"
+  },
+  "types": "dist/glpk.d.ts"
 }

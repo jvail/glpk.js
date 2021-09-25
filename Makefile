@@ -1,9 +1,13 @@
-GLPK_VERSION = 5.0
-
 EMCC_FLAGS :=
-# access emcc settings through Runtime.compilerSettings or Runtime.getCompilerSetting(name)
 EMCC_FLAGS += -s RETAIN_COMPILER_SETTINGS=1
+EMCC_FLAGS += -s INITIAL_MEMORY=16MB
 EMCC_FLAGS += -s ALLOW_MEMORY_GROWTH=1
+EMCC_FLAGS += -s USE_ES6_IMPORT_META=0
+EMCC_FLAGS += -s EXPORT_ES6=1
+EMCC_FLAGS += -s EXPORT_NAME="GLPK"
+EMCC_FLAGS += -s MODULARIZE=1
+EMCC_FLAGS += -s WASM_ASYNC_COMPILATION=0
+EMCC_FLAGS += -s ENVIRONMENT="node,worker"
 EMCC_FLAGS += -s EXPORTED_FUNCTIONS="[ \
 	'_glp_version', \
 	'_glp_create_prob', \
@@ -43,44 +47,29 @@ EMCC_FLAGS += -s EXPORTED_FUNCTIONS="[ \
 	'_glp_delete_prob', \
 	'_glp_free_env', \
 	'_glp_write_lp', \
-	'_solve_lp', \
-	'_solve_mip' \
+	'_glp_simplex', \
+	'_free', \
+	'_malloc' \
 	]"
 
 PWD=$(shell pwd)
 
-all: glpk glpk.js glpk-worker.js
+all: glpk js
 
-getglpk:
+glpk:
 	cd $(PWD)/src/glpk && \
-	wget -nc http://ftp.gnu.org/gnu/glpk/glpk-$(GLPK_VERSION).tar.gz && \
-	tar -xf glpk-$(GLPK_VERSION).tar.gz
-
-glpk: getglpk
-	mkdir -p $(PWD)/src/glpk/glpk-$(GLPK_VERSION)/build && \
-	cd $(PWD)/src/glpk/glpk-$(GLPK_VERSION)/build && \
-	emconfigure ../configure --disable-shared && \
+	autoreconf -fi && \
+	emconfigure ./configure --disable-shared && \
 	emmake make -j4 \
 
-glpk.js: src/pre.js src/post.js src/glpk.js.c
+js: src/pre.js src/glpk.js.c
 	cd $(PWD); \
-	emcc -O3 --memory-init-file 0 $(EMCC_FLAGS) \
-	-Isrc/glpk/glpk-$(GLPK_VERSION)/src \
-	--pre-js src/pre.js --post-js src/post.js  \
-	src/glpk/glpk-$(GLPK_VERSION)/build/src/.libs/libglpk.a \
-	src/glpk.js.c -o glpk.js
-
-glpk-worker.js: src/pre.js src/post-worker.js src/glpk.js.c
-	cd $(PWD); \
-	emcc -O3 --memory-init-file 0 $(EMCC_FLAGS) \
-	-Isrc/glpk/glpk-$(GLPK_VERSION)/src \
-	--pre-js src/pre.js --post-js src/post-worker.js  \
-	src/glpk/glpk-$(GLPK_VERSION)/build/src/.libs/libglpk.a \
-	src/glpk.js.c -o glpk-worker.js
+	emcc -Os --memory-init-file 0 $(EMCC_FLAGS) -s EXPORTED_RUNTIME_METHODS=[cwrap] \
+	-Isrc/glpk/src \
+	--pre-js src/pre.js \
+	src/glpk/src/.libs/libglpk.a \
+	src/glpk.js.c -o src/.build/glpk.js
 
 clean:
-	rm -f $(PWD)/glpk.js;
-	rm -f $(PWD)/glpk.wasm;
-	rm -f $(PWD)/glpk-worker.js;
-	rm -f $(PWD)/glpk-worker.wasm;
-	rm -rf $(PWD)/src/glpk/glpk-$(GLPK_VERSION);
+	rm -fr $(PWD)/src/.build/*;
+	cd $(PWD)/src/glpk && make clean;
