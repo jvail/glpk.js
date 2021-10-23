@@ -5,7 +5,7 @@ const glpk = function (wasmBinary=null) {
     if (!new.target) return Object.freeze(new glpk(wasmBinary));
 
     const {
-        cwrap, _free, _malloc, HEAPU8, FS
+        cwrap, _free, _malloc, FS, writeArrayToMemory
     } = GLPK({ wasmBinary });
 
     const glp_version = cwrap('glp_version', 'string', []),
@@ -93,20 +93,24 @@ const glpk = function (wasmBinary=null) {
                 val[i + 1] = v.coef;
             });
 
-            let ind_ = new Int32Array(ind);
-            let ind_ptr = _malloc(ind_.length * ind_.BYTES_PER_ELEMENT);
-            let ind_data = new Uint8Array(HEAPU8.buffer, ind_ptr, ind_.length * ind_.BYTES_PER_ELEMENT);
-            ind_data.set(new Uint8Array(ind_.buffer));
+            // let ind_ = new Int32Array(ind);
+            const ind_ptr = _malloc(ind.length * 4);
+            const val_ptr = _malloc(val.length * 8);
+            writeArrayToMemory(new Uint8Array((new Int32Array(ind)).buffer), ind_ptr);
+            writeArrayToMemory(new Uint8Array((new Float64Array(val)).buffer), val_ptr);
+            // let ind_data = new Uint8Array(HEAPU8.buffer, ind_ptr, ind_.length * ind_.BYTES_PER_ELEMENT);
+            // ind_data.set(new Uint8Array(ind_.buffer));
 
-            let val_ = new Float64Array(val);
-            let val_ptr = _malloc(val_.length * val_.BYTES_PER_ELEMENT);
-            let val_data = new Uint8Array(HEAPU8.buffer, val_ptr, val_.length * val_.BYTES_PER_ELEMENT);
-            val_data.set(new Uint8Array(val_.buffer));
+            // let val_ = new Float64Array(val);
+            // let val_data = new Uint8Array(HEAPU8.buffer, val_ptr, val_.length * val_.BYTES_PER_ELEMENT);
+            // val_data.set(new Uint8Array(val_.buffer));
 
             row = glp_add_rows(P, 1);
             glp_set_row_name(P, row, c.name);
             glp_set_mat_row(P, row, vars.length, ind_ptr, val_ptr);
             glp_set_row_bnds(P, row, bnds.type, bnds.lb, bnds.ub);
+            _free(ind_ptr);
+            _free(val_ptr);
         });
 
         if (lp.bounds) {
@@ -271,7 +275,7 @@ const glpk = function (wasmBinary=null) {
             msglev: typeof opt_.msglev !== 'undefined' ? +opt_.msglev : this.GLP_MSG_ERR,
             tmlim: typeof opt_.tmlim !== 'undefined' && +opt_.tmlim >= 0 ? +opt_.tmlim * 1000 : INT_MAX,
             mipgap: typeof opt_.mipgap !== 'undefined' && +opt_.mipgap >= 0 ? +opt_.mipgap : 0.0,
-            cb: opt.cb
+            cb: opt_.cb
         };
 
         const P = setup(lp_),

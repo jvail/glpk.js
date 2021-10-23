@@ -4,6 +4,7 @@ EMCC_FLAGS += -s INITIAL_MEMORY=16MB
 EMCC_FLAGS += -s ALLOW_MEMORY_GROWTH=1
 EMCC_FLAGS += -s USE_ES6_IMPORT_META=0
 EMCC_FLAGS += -s EXPORT_ES6=1
+EMCC_FLAGS += -s ASSERTIONS=0
 EMCC_FLAGS += -s EXPORT_NAME="GLPK"
 EMCC_FLAGS += -s MODULARIZE=1
 EMCC_FLAGS += -s WASM_ASYNC_COMPILATION=0
@@ -65,7 +66,7 @@ glpk:
 
 js: src/pre.js src/glpk.js.c
 	cd $(PWD); \
-	emcc -Os --memory-init-file 0 $(EMCC_FLAGS) -s EXPORTED_RUNTIME_METHODS=[cwrap] \
+	emcc -Os --memory-init-file 0 $(EMCC_FLAGS) -s EXPORTED_RUNTIME_METHODS="[cwrap, writeArrayToMemory]" \
 	-Isrc/glpk/src \
 	--pre-js src/pre.js \
 	src/glpk/src/.libs/libglpk.a \
