@@ -11,7 +11,8 @@ npm install glpk.js
 ## Code Example
 
 ```js
-const glpk = require('glpk.js');
+const GLPK = require('glpk.js');
+const glpk = GLPK();
 const options = {
     msglev: glpk.GLP_MSG_ALL,
     presol: true,
@@ -20,7 +21,7 @@ const options = {
         each: 1
     }
 };
-const res = glpk().solve({
+const res = glpk.solve({
     name: 'LP',
     objective: {
         direction: glpk.GLP_MAX,
