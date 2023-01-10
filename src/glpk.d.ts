@@ -1,4 +1,4 @@
-interface LP {
+export interface LP {
     name: string,
     objective: {
         direction: number,
@@ -21,7 +21,7 @@ interface LP {
     options?: Options
 }
 
-interface Options {
+export interface Options {
     mipgap?: number,    /* set relative mip gap tolerance to mipgap, default 0.0 */
     tmlim?: number,     /* limit solution time to tmlim seconds, default INT_MAX */
     msglev?: number,    /* message level for terminal output, default GLP_MSG_ERR */
@@ -32,7 +32,7 @@ interface Options {
     }
 }
 
-interface Result {
+export interface Result {
     name: string;
     time: number;
     result: {
@@ -43,7 +43,7 @@ interface Result {
     };
 }
 
-interface GLPK {
+export interface GLPK {
 
     /* direction */
     readonly GLP_MIN: number;  /* minimization */
@@ -76,9 +76,5 @@ interface GLPK {
     solve(lp: LP, options?: number | Options): Result /* options is either a glp message level or an options obj */
 }
 
-export {
-    Options,
-    LP,
-    Result,
-    GLPK
-}
+declare const GLPKConstructor: () => GLPK;
+export default GLPKConstructor;
