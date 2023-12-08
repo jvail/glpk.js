@@ -48,11 +48,7 @@
                 };
 
                 const opt = {
-                    msglev: glpk.GLP_MSG_OFF,
-                    cb: {
-                        call: res => print(res),
-                        each: 1
-                    }
+                    msglev: glpk.GLP_MSG_OFF
                 };
 
                 glpk.solve(lp, opt)

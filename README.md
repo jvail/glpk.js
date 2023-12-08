@@ -172,6 +172,8 @@ interface GLPK {
 
 ### emsdk
 
+Built with emsdk 2.0.34 (quite outdated - but more recent 3.x versions would require some refactoring...).
+
 ```sh
 git clone https://github.com/jvail/glpk.js.git
 cd glpk.js
