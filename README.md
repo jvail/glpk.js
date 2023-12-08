@@ -8,7 +8,9 @@ JavaScript/WebAssembly port of GLPK (GNU Linear Programming Kit) for browser & n
 npm install glpk.js
 ```
 
-## Code Example
+## Examples
+
+Minimal live example: https://jvail.github.io/glpk.js/examples/lp.html
 
 ```js
 const GLPK = require('glpk.js');

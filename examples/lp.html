@@ -14,7 +14,7 @@
 
                 function print(res) {
                     const el = window.document.getElementById('out');
-                    el.innerHTML = JSON.stringify(res, null, 2);
+                    el.innerHTML = `Solution: LP \n\n ${JSON.stringify(res, null, 2)}`;
                 };
 
                 const lp = {
@@ -61,7 +61,7 @@
 
             })();
         </script>
-        <pre id='out'></pre>
         <pre id='cplex'></pre>
+        <pre id='out'></pre>
     </body>
 </html>
