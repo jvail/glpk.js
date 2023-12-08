@@ -53,7 +53,7 @@ const res = glpk.solve({
     ]
 }, options);
 ```
-## Live Examples
+## Other Examples
 
 glpk.js and Mixed-Integer Programming with a lot of background information:
 
