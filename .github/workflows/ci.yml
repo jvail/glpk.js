@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: 'Force publish even if version is unchanged'
+        type: boolean
+        default: false
+        required: true
+
+jobs:
+  build-and-publish:
+    name: Build / Publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24.x'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          # Newer versions removed the support for the `USE_ES6_IMPORT_META` flag.
+          # However, the flag combination to let both node.js and web worker versions work is still unknown.
+          # Therefore, the version is fixed.
+          version: 2.0.34
+          actions-cache-folder: '.emsdk-cache'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Check version change
+        id: check
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        run: |
+          # Get the old version
+          git show HEAD~1:package.json > old_package.json
+          OLD_VERSION=$(node -p "require('./old_package.json').version")
+          # Get the new version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          
+          if [ "$OLD_VERSION" != "$NEW_VERSION" ] || ${{ inputs.force_publish == true }}; then
+            echo "Version changed from $OLD_VERSION to $NEW_VERSION"
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Version unchanged"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        if: steps.check.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.check.outputs.version }}
+          name: Release v${{ steps.check.outputs.version }}
+          generate_release_notes: true
+
+      - name: Publish to npm
+        if: steps.check.outputs.changed == 'true'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

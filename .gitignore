@@ -1,5 +1,6 @@
 node_modules
 .*
+!.github/
 *.log
 .idea/
 dist/
