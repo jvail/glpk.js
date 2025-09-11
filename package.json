@@ -1,6 +1,6 @@
 {
   "name": "@raenonx/glpk.js",
-  "version": "4.0.2",
+  "version": "5.0.0",
   "description": "GLPK for node & browser",
   "keywords": [
     "LP",
