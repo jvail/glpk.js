@@ -18,21 +18,21 @@ export interface LP {
     }[],
     binaries?: string[],
     generals?: string[],
-    options?: Options
+    options?: LpOptions
 }
 
-export interface Options {
+export interface LpOptions {
     mipgap?: number,    /* set relative mip gap tolerance to mipgap, default 0.0 */
     tmlim?: number,     /* limit solution time to tmlim seconds, default INT_MAX */
     msglev?: number,    /* message level for terminal output, default GLP_MSG_ERR */
     presol?: boolean,   /* use presolver, default true */
     cb?: {              /* a callback called at each 'each' iteration (only simplex) */
-        call(result: Result),
+        call(result: LpResult),
         each: number
     }
 }
 
-export interface Result {
+export interface LpResult {
     name: string;
     time: number;
     result: {
@@ -43,7 +43,7 @@ export interface Result {
     };
 }
 
-export interface GLPK {
+export interface GLPKBase {
 
     /* direction */
     readonly GLP_MIN: number;  /* minimization */
@@ -72,9 +72,5 @@ export interface GLPK {
     readonly GLP_UNBND: number;   /* solution is unbounded */
 
     version: string;  /* GLPK version */
-    write(lp: LP): string; /* writes problem data in CPLEX LP */
-    solve(lp: LP, options?: number | Options): Result /* options is either a glp message level or an options obj */
-}
 
-declare const GLPKConstructor: () => GLPK;
-export default GLPKConstructor;
+}

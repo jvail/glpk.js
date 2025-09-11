@@ -1,7 +1,7 @@
 const tape = require('tape');
 const fs = require('fs');
 const almostEqual = require('almost-equal');
-const glpk = require('../dist/glpk.js');
+const glpk = require('../dist/node.js');
 
 tape('test LP/MIP & compare against native node-glpk', { timeout: 99999 }, t => {
     [

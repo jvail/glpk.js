@@ -55,7 +55,10 @@ EMCC_FLAGS += -s EXPORTED_FUNCTIONS="[ \
 
 PWD=$(shell pwd)
 
-all: glpk js
+all: wipe-dist glpk js
+
+wipe-dist:
+	rm -rf $(PWD)/dist
 
 glpk:
 	mkdir -p src/.build; \

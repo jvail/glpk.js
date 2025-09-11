@@ -13,7 +13,7 @@ npm install glpk.js
 Minimal live example: https://jvail.github.io/glpk.js/examples/lp.html
 
 ```js
-const GLPK = require('glpk.js');
+const GLPK = require('glpk.js/node');
 const glpk = GLPK();
 const options = {
     msglev: glpk.GLP_MSG_ALL,
@@ -53,6 +53,11 @@ const res = glpk.solve({
     ]
 }, options);
 ```
+
+For node.js runtime, use `glpk.js/node` for the import.
+
+For browser, use `glpk.js/web` for the import which uses webworker under the hood.
+
 ## Other Examples
 
 glpk.js and Mixed-Integer Programming with a lot of background information:
@@ -71,32 +76,11 @@ Some (slighty outdated) examples using glpk.js:
 
 ## API
 
-```typescript
-interface LP {
-    name: string,
-    objective: {
-        direction: number,
-        name: string,
-        vars: { name: string, coef: number }[]
-    },
-    subjectTo: {
-        name: string,
-        vars: { name: string, coef: number }[],
-        bnds: { type: number, ub: number, lb: number }
-    }[],
-    bounds?: {
-        name: string,
-        type: number,
-        ub: number,
-        lb: number
-    }[],
-    binaries?: string[],
-    generals?: string[],
-    options?: Options
-}
-```
+See `src/glpk-shared.d.ts` for the complete API.
 
-Optionally the "kind of structural variable"
+------------
+
+`LP` optionally accepts the "kind of structural variable"
 
 * continuous variable (default)
 * integer variable
@@ -110,64 +94,6 @@ may be specified with an array of variable names:
 
   /* binary */
   lp.binaries = ['x3', 'x4'];
-```
-
-
-```typescript
-interface Options {
-    mipgap?: number,    /* set relative mip gap tolerance to mipgap, default 0.0 */
-    tmlim?: number,     /* limit solution time to tmlim seconds, default INT_MAX */
-    msglev?: number,    /* message level for terminal output, default GLP_MSG_ERR */
-    presol?: boolean,   /* use presolver, default true */
-    cb?: {              /* a callback called at each 'each' iteration (only simplex) */
-        call(result: Result),
-        each: number
-    }
-}
-
-interface Result {
-    name: string;
-    time: number;
-    result: {
-        status: number;
-        z: number;
-        vars: {[key:string]: number};
-        dual?: { [key: string]: number }; /* simplex only */
-    };
-}
-
-interface GLPK {
-
-    /* direction */
-    readonly GLP_MIN: number;  /* minimization */
-    readonly GLP_MAX: number;  /* maximization */
-
-    /* type of auxiliary/structural variable: */
-    readonly GLP_FR: number;  /* free (unbounded) variable */
-    readonly GLP_LO: number;  /* variable with lower bound */
-    readonly GLP_UP: number;  /* variable with upper bound */
-    readonly GLP_DB: number;  /* double-bounded variable */
-    readonly GLP_FX: number;  /* fixed variable */
-
-    /* message level: */
-    readonly GLP_MSG_OFF: number;  /* no output */
-    readonly GLP_MSG_ERR: number;  /* warning and error messages only */
-    readonly GLP_MSG_ON: number;   /* normal output */
-    readonly GLP_MSG_ALL: number;  /* full output */
-    readonly GLP_MSG_DBG: number;  /* debug output */
-
-    /* solution status: */
-    readonly GLP_UNDEF: number;   /* solution is undefined */
-    readonly GLP_FEAS: number;    /* solution is feasible */
-    readonly GLP_INFEAS: number;  /* solution is infeasible */
-    readonly GLP_NOFEAS: number;  /* no feasible solution exists */
-    readonly GLP_OPT: number;     /* solution is optimal */
-    readonly GLP_UNBND: number;   /* solution is unbounded */
-
-    version: string;  /* GLPK version */
-    write(lp: LP): string; /* writes problem data in CPLEX LP */
-    solve(lp: LP, options?: number | Options): Result /* options is either a glp message level or an options obj */
-}
 ```
 
 ## Building

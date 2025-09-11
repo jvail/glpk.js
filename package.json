@@ -1,5 +1,5 @@
 {
-  "name": "glpk.js",
+  "name": "@raenonx/glpk.js",
   "version": "4.0.2",
   "description": "GLPK for node & browser",
   "keywords": [
@@ -9,8 +9,21 @@
     "linear programming",
     "linear optimization"
   ],
-  "main": "dist/glpk.js",
-  "browser": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/glpk-shared.d.ts"
+    },
+    "./web": {
+      "browser": "./dist/web.js",
+      "default": "./dist/web.js",
+      "types": "./dist/glpk-web.d.ts"
+    },
+    "./node": {
+      "node": "./dist/node.js",
+      "default": "./dist/node.js",
+      "types": "./dist/glpk-node.d.ts"
+    }
+  },
   "directories": {
     "test": "test"
   },
@@ -42,6 +55,5 @@
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-terser": "^7.0.2",
     "tape": "^5.3.1"
-  },
-  "types": "dist/glpk.d.ts"
+  }
 }

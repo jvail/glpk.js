@@ -297,6 +297,10 @@ const glpk = function (wasmBinary=null) {
 
     };
 
+    this.terminate = () => {
+        glp_free_env();
+    };
+
 };
 
 export default glpk;

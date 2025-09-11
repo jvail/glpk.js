@@ -1,6 +1,6 @@
 const fs = require('fs');
 const assert = require('assert');
-const GLPK = require('../dist/glpk.js');
+const GLPK = require('../dist/node.js');
 
 const glpk = GLPK();
 const lp = JSON.parse(fs.readFileSync(__dirname + '/data/mem.json').toString());
