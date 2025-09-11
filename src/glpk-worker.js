@@ -19,7 +19,7 @@ self.onmessage = function (evt) {
                 postMessage({ res: glpk.write(lp) });
                 break;
             default:
-                break;
+                throw new Error(`unknown glpk command: ${cmd}`);
         }
     } else {
         const { wasmBinary } = evt.data
