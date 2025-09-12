@@ -1,6 +1,6 @@
 {
   "name": "@raenonx/glpk.js",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "description": "GLPK for node & browser",
   "keywords": [
     "LP",
@@ -11,6 +11,8 @@
   ],
   "exports": {
     ".": {
+      "browser": "./dist/web.js",
+      "node": "./dist/node.js",
       "types": "./dist/glpk-shared.d.ts"
     },
     "./web": {
@@ -32,7 +34,9 @@
     "build:em": "make all",
     "build:js": "rollup -c rollup.config.js --worker && node src/pack.js && rollup -c rollup.config.js",
     "clean": "make clean",
-    "test": "node test/test.js"
+    "test": "node test/test.js",
+    "local:build": "npm run build && npm run test",
+    "local:copy": "npm pack; cp raenonx-glpk.js-5.1.0.tgz /mnt/d/Projects/PokemonSleep/pokemon-sleep-ui-core/"
   },
   "repository": {
     "type": "git",

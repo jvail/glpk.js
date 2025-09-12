@@ -1,16 +1,23 @@
-import {GLPKBase, LP, LpOptions, LpResult} from './glpk-shared';
+import {GLPKSyncConstructor} from './glpk-sync';
+import {GLPKAsyncConstructor} from './glpk-async';
 
-export interface GLPKNode extends GLPKBase {
-
-  write(lp: LP): string; /* writes problem data in CPLEX LP */
-  solve(lp: LP, options?: number | LpOptions): LpResult /* options is either a glp message level or an options obj */
-  terminate(): void; /* terminates the GLPK worker */
-
-}
 
 /**
- * Constructor for GLPK Node.js version.
+ * Synchronous constructor for GLPK Node.js version.
  * Returns a GLPK instance running directly in Node.js.
  */
-declare const GLPKNodeConstructor: () => GLPKNode;
-export default GLPKNodeConstructor;
+export declare const glpkSync: typeof GLPKSyncConstructor;
+
+/**
+ * Asynchronous constructor for GLPK Node.js version.
+ * Returns a Promise that resolves to a GLPK instance running directly in Node.js.
+ *
+ * This only wraps the synchronous creation of the GLPK instance.
+ * Despite the typing of the main functions like `solve()` is async, it's actually called synchronously.
+ *
+ * If the runtime will be node.js only,
+ * it's recommended to call `glpkSync()` for creating the GLPK instance explicitly.
+ */
+export declare const glpkAsync: typeof GLPKAsyncConstructor;
+
+export default GLPKSyncConstructor;

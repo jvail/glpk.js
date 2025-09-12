@@ -1,7 +1,7 @@
 const tape = require('tape');
 const fs = require('fs');
 const almostEqual = require('almost-equal');
-const glpk = require('../dist/node.js');
+const {glpkSync} = require('../dist/node.js');
 
 tape('test LP/MIP & compare against native node-glpk', { timeout: 99999 }, t => {
     [
@@ -12,7 +12,7 @@ tape('test LP/MIP & compare against native node-glpk', { timeout: 99999 }, t => 
     ].forEach((d) => {
         const [problemName, expectedSolution] = d;
         const lp = JSON.parse(fs.readFileSync(`${__dirname}/data/${problemName}.json`).toString());
-        const z = glpk().solve(lp, {
+        const z = glpkSync().solve(lp, {
             cb: {
                 call: res => {
                 console.log(res.z);
@@ -28,7 +28,7 @@ tape('test LP/MIP & compare against native node-glpk', { timeout: 99999 }, t => 
 tape('The time limit should kill the solver before finding optimal solution', { timeout: 99999 }, t => {
 
     const lp = JSON.parse(fs.readFileSync(`${__dirname}/data/mip2.json`).toString());
-        const sol = glpk().solve(lp, {
+        const sol = glpkSync().solve(lp, {
             tmlim: 0.001
         });
 

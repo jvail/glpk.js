@@ -1,3 +1,5 @@
+import {GLPKAsyncConstructor} from './glpk-async';
+
 export interface LP {
     name: string,
     objective: {
@@ -72,5 +74,18 @@ export interface GLPKBase {
     readonly GLP_UNBND: number;   /* solution is unbounded */
 
     version: string;  /* GLPK version */
+    terminate(): void; /* terminates the GLPK worker */
 
 }
+
+export {GLPKAsync, GLPKAsyncConstructor} from './glpk-async';
+export {GLPKSync, GLPKSyncConstructor} from './glpk-sync';
+
+/**
+ * Returns an async GLPK instance regardless of the runtime environment.
+ * To use the sync GLPK instance, call `glpkSync()` from `glpk.js/node` instead.
+ *
+ * This mainly serves as the entry point where GLPK can be used either in browser or node.js.
+ * If you know that the GLPK instance will only run in node.js, it's recommended to use `glpkSync` instead.
+ */
+export default GLPKAsyncConstructor;

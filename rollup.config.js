@@ -6,6 +6,8 @@ import copy from 'rollup-plugin-copy';
 const cpShared = copy({
     targets: [
         { src: 'src/glpk-shared.d.ts', dest: 'dist' },
+        { src: 'src/glpk-sync.d.ts', dest: 'dist' },
+        { src: 'src/glpk-async.d.ts', dest: 'dist' },
         { src: 'src/.build/glpk.wasm', dest: 'dist' },
     ]
 });
