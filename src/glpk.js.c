@@ -7,13 +7,13 @@ extern "C" {
 #endif
 
 
-glp_smcp* EMSCRIPTEN_KEEPALIVE get_glp_smcp(int it_lim,  int msg_lev, int tm_lim) {
+glp_smcp* EMSCRIPTEN_KEEPALIVE get_glp_smcp(int it_lim, int msg_lev, int tm_lim, int presolve) {
     glp_smcp *parm = malloc(sizeof *parm);
     glp_init_smcp(parm);
     parm->it_lim = it_lim;
     parm->msg_lev = msg_lev;
     parm->tm_lim = tm_lim;
-    parm->presolve = 0; // disable presolver
+    parm->presolve = presolve;
     return parm;
 }
 

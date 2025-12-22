@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>glpk.js Large LP Example</title>
+        <meta charset="utf-8">
+        <style>
+            .chart {
+                display: flex;
+                align-items: flex-end;
+                height: 200px;
+                gap: 2px;
+                border: 1px solid #ccc;
+                padding: 5px;
+                margin: 10px 0;
+            }
+            .bar {
+                flex: 1;
+                background: grey;
+                min-height: 1px;
+            }
+        </style>
+    </head>
+    <body>
+        <h3>Large LP: 600x600 Transportation Problem</h3>
+        <p>Iterations: <span id="iterations">0</span> | Objective: <span id="objective">-</span> | Status: <span id="status">-</span></p>
+        <div class="chart" id="chart"></div>
+        <pre id="out"></pre>
+        <script type="module" src="lp-large.js"></script>
+    </body>
+</html>

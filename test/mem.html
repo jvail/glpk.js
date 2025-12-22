@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>glpk.js Memory Test</title>
+        <meta charset="utf-8">
+        <style>
+            body {
+                font-family: monospace;
+                padding: 20px;
+                max-width: 900px;
+                margin: 0 auto;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            .controls {
+                margin-bottom: 20px;
+                padding: 10px;
+                background: #f5f5f5;
+                border-radius: 4px;
+            }
+            .control-row {
+                margin-bottom: 10px;
+            }
+            label {
+                display: inline-block;
+                margin-right: 20px;
+            }
+            input[type="number"] {
+                width: 80px;
+            }
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+                cursor: pointer;
+            }
+            button:disabled {
+                cursor: not-allowed;
+                opacity: 0.6;
+            }
+            .mode-selector {
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #ddd;
+            }
+            .mode-selector label {
+                cursor: pointer;
+            }
+            .parallel-options {
+                display: none;
+                padding: 10px;
+                background: #e8f4ff;
+                border-radius: 4px;
+                margin-bottom: 10px;
+            }
+            .parallel-options.visible {
+                display: block;
+            }
+            #output {
+                white-space: pre-wrap;
+                background: #1e1e1e;
+                color: #d4d4d4;
+                padding: 15px;
+                border-radius: 4px;
+                height: 400px;
+                overflow-y: auto;
+            }
+            .success { color: #4ec9b0; }
+            .error { color: #f14c4c; }
+            .info { color: #569cd6; }
+            .worker { color: #dcdcaa; }
+            .warning { color: #cca700; }
+        </style>
+    </head>
+    <body>
+        <h1>glpk.js Memory Test</h1>
+        <p>Tests for memory leaks by running LP problems multiple times (Issue #45, #47)</p>
+
+        <div class="controls">
+            <div class="mode-selector">
+                <label>
+                    <input type="radio" name="mode" value="single" checked onchange="updateMode()"> Single Worker
+                </label>
+                <label>
+                    <input type="radio" name="mode" value="parallel" onchange="updateMode()"> Parallel Workers
+                </label>
+            </div>
+
+            <div id="parallelOptions" class="parallel-options">
+                <label>
+                    Number of Workers:
+                    <input type="number" id="numWorkers" value="4" min="2" max="16">
+                </label>
+                <p style="margin: 5px 0; font-size: 0.9em; color: #666;">
+                    Tests whether multiple GLPK/WASM instances can run independently without memory overlap or interference.
+                </p>
+            </div>
+
+            <div class="control-row">
+                <label>
+                    Iterations:
+                    <input type="number" id="iterations" value="50" min="1" max="1000">
+                </label>
+                <label>
+                    Variables:
+                    <input type="number" id="numVars" value="200" min="10" max="2000">
+                </label>
+                <label>
+                    Constraints:
+                    <input type="number" id="numConstraints" value="200" min="10" max="2000">
+                </label>
+                <label>
+                    <input type="checkbox" id="mip"> MIP (mixed-integer)
+                </label>
+            </div>
+            <button id="runBtn" onclick="runTest()">Run Test</button>
+            <button id="clearBtn" onclick="clearOutput()">Clear</button>
+        </div>
+
+        <div id="output"></div>
+
+        <script type="module">
+            import GLPK from '../dist/index.js';
+            import { runMemoryTest, runParallelWorkerTest, generateLargeProblem, getMemoryUsage } from './mem-test.js';
+
+            const output = document.getElementById('output');
+            const runBtn = document.getElementById('runBtn');
+            const parallelOptions = document.getElementById('parallelOptions');
+
+            function log(msg, className = '') {
+                const line = document.createElement('div');
+                line.textContent = msg;
+                if (className) line.className = className;
+                output.appendChild(line);
+                output.scrollTop = output.scrollHeight;
+            }
+
+            function getSelectedMode() {
+                return document.querySelector('input[name="mode"]:checked').value;
+            }
+
+            window.updateMode = function() {
+                const mode = getSelectedMode();
+                if (mode === 'parallel') {
+                    parallelOptions.classList.add('visible');
+                } else {
+                    parallelOptions.classList.remove('visible');
+                }
+            };
+
+            window.clearOutput = function() {
+                output.innerHTML = '';
+            };
+
+            window.runTest = async function() {
+                runBtn.disabled = true;
+                output.innerHTML = '';
+
+                const mode = getSelectedMode();
+                const iterations = parseInt(document.getElementById('iterations').value, 10);
+                const numVars = parseInt(document.getElementById('numVars').value, 10);
+                const numConstraints = parseInt(document.getElementById('numConstraints').value, 10);
+                const mip = document.getElementById('mip').checked;
+
+                try {
+                    const mem = getMemoryUsage();
+                    if (!mem) {
+                        log('Note: Memory API not available. Use Chrome with --enable-precise-memory-info flag.', 'info');
+                    }
+
+                    if (mode === 'parallel') {
+                        // Parallel workers test
+                        const numWorkers = parseInt(document.getElementById('numWorkers').value, 10);
+                        log(`=== Parallel Workers Test (Issue #47) ===`, 'info');
+                        log(`Testing ${numWorkers} independent GLPK/WASM instances`, 'info');
+                        log('');
+
+                        const result = await runParallelWorkerTest(GLPK, {
+                            numWorkers,
+                            iterations,
+                            numVars,
+                            numConstraints,
+                            mip,
+                            log: (msg, className) => {
+                                // Color worker messages differently, or use provided class
+                                if (className) {
+                                    log(msg, className);
+                                } else {
+                                    const isWorkerMsg = msg.startsWith('[Worker');
+                                    log(msg, isWorkerMsg ? 'worker' : '');
+                                }
+                            }
+                        });
+
+                        log('');
+                        if (result.success) {
+                            log('All workers completed successfully!', 'success');
+                        } else {
+                            const failedCount = result.workerResults.filter(r => !r.success).length;
+                            log(`${failedCount}/${result.numWorkers} workers failed.`, 'error');
+                        }
+                    } else {
+                        // Single worker test (original behavior)
+                        log('Initializing GLPK (web worker)...', 'info');
+                        const glpk = await GLPK();
+                        log(`GLPK version: ${glpk.version}`, 'info');
+
+                        const problemType = mip ? 'MIP' : 'LP';
+                        log(`Generating ${problemType} problem...`, 'info');
+                        const lp = generateLargeProblem(glpk, { numVars, numConstraints, mip });
+
+                        if (mip) {
+                            log(`Binary vars: ${lp.binaries?.length ?? 0}, Integer vars: ${lp.generals?.length ?? 0}`, 'info');
+                        }
+
+                        const result = await runMemoryTest(glpk, {
+                            iterations,
+                            lp,
+                            log: (msg) => log(msg)
+                        });
+
+                        if (result.success) {
+                            log('Test completed successfully!', 'success');
+                        } else {
+                            log('Test completed with failures.', 'error');
+                        }
+
+                        // Terminate worker to clean up
+                        if (glpk.terminate) {
+                            glpk.terminate();
+                            log('Worker terminated.', 'info');
+                        }
+                    }
+                } catch (err) {
+                    log(`Error: ${err.message}`, 'error');
+                    console.error(err);
+                } finally {
+                    runBtn.disabled = false;
+                }
+            };
+        </script>
+    </body>
+</html>

@@ -1,6 +1,10 @@
 {
   "name": "glpk.js",
-  "version": "4.0.2",
+  "version": "5.0.0-pre.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "description": "GLPK for node & browser",
   "keywords": [
     "LP",
@@ -19,7 +23,8 @@
     "build:em": "make all",
     "build:js": "rollup -c rollup.config.js --worker && node src/pack.js && rollup -c rollup.config.js",
     "clean": "make clean",
-    "test": "node test/test.js"
+    "test": "node test/test.js",
+    "format": "prettier --write \"src/**/*.{js,ts}\" \"test/**/*.js\" \"examples/**/*.js\" \"*.js\""
   },
   "repository": {
     "type": "git",
@@ -32,16 +37,18 @@
   },
   "homepage": "https://github.com/jvail/glpk.js#readme",
   "dependencies": {
-    "pako": "^2.0.4"
+    "pako": "^2.1.0"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^20.0.0",
-    "@rollup/plugin-node-resolve": "^13.0.5",
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-replace": "^6.0.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "almost-equal": "^1.1.0",
-    "rollup": "^2.57.0",
-    "rollup-plugin-copy": "^3.4.0",
-    "rollup-plugin-terser": "^7.0.2",
-    "tape": "^5.3.1"
+    "prettier": "^3.7.4",
+    "rollup": "^4.54.0",
+    "rollup-plugin-copy": "^3.5.0",
+    "tape": "^5.9.0"
   },
   "types": "dist/glpk.d.ts"
 }
