@@ -1,8 +1,8 @@
 /**
- * @typedef {import('../dist/glpk.d.ts').GLPK} GLPK
- * @typedef {import('../dist/glpk.d.ts').LP} LP
- * @typedef {import('../dist/glpk.d.ts').Options} Options
- * @typedef {import('../dist/glpk.d.ts').Result} Result
+ * @typedef {import('../dist/index.d.ts').GLPK} GLPK
+ * @typedef {import('../dist/index.d.ts').LP} LP
+ * @typedef {import('../dist/index.d.ts').Options} Options
+ * @typedef {import('../dist/index.d.ts').Result} Result
  */
 
 import GLPK from '../dist/index.js';

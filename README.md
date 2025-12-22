@@ -114,7 +114,10 @@ may be specified with an array of variable names:
 ```
 
 
-For full TypeScript definitions (`Options`, `Result`, `GLPK`, `GLPKSync`), see [src/glpk.d.ts](src/glpk.d.ts).
+For full TypeScript definitions, see:
+- [src/types.d.ts](src/types.d.ts) - shared types (`LP`, `Options`, `Result`)
+- [src/index.d.ts](src/index.d.ts) - browser async API (default export)
+- [src/glpk.d.ts](src/glpk.d.ts) - Node.js sync API (`glpk.js/node`)
 
 ## Building
 

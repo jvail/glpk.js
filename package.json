@@ -1,6 +1,6 @@
 {
   "name": "glpk.js",
-  "version": "5.0.0-pre.0",
+  "version": "5.0.0-pre.1",
   "type": "module",
   "engines": {
     "node": ">=24"
@@ -13,8 +13,16 @@
     "linear programming",
     "linear optimization"
   ],
-  "main": "dist/glpk.js",
-  "browser": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/glpk.d.ts",
+      "default": "./dist/glpk.js"
+    }
+  },
   "directories": {
     "test": "test"
   },
@@ -49,6 +57,5 @@
     "rollup": "^4.54.0",
     "rollup-plugin-copy": "^3.5.0",
     "tape": "^5.9.0"
-  },
-  "types": "dist/glpk.d.ts"
+  }
 }

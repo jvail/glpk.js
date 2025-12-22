@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 tape('test LP/MIP & compare against native node-glpk', { timeout: 99999 }, async (t) => {
-    /** @type {import('../src/glpk.d.ts').GLPKSync} */
+    /** @type {import('../src/glpk.d.ts').GLPK} */
     const glpk = await GLPK();
     const problems = [
         ['lp', 0.45999999999999996],
@@ -43,7 +43,7 @@ tape(
     'The time limit should kill the solver before finding optimal solution',
     { timeout: 99999 },
     async (t) => {
-        /** @type {import('../src/glpk.d.ts').GLPKSync} */
+        /** @type {import('../src/glpk.d.ts').GLPK} */
         const glpk = await GLPK();
         const lp = JSON.parse(fs.readFileSync(`${__dirname}/data/mip2.json`).toString());
         const sol = glpk.solve(lp, {

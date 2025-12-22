@@ -6,8 +6,8 @@
  */
 
 /**
- * @typedef {import('../src/glpk.d.ts').GLPK} GLPK
- * @typedef {import('../src/glpk.d.ts').LP} LP
+ * @typedef {import('../src/types.d.ts').LP} LP
+ * @typedef {import('../src/types.d.ts').GLPKConstants} GLPKConstants
  */
 
 /**
@@ -21,7 +21,7 @@
 
 /**
  * Generate a large LP or MIP problem
- * @param {GLPK} glpk - GLPK instance for constants
+ * @param {GLPKConstants} glpk - GLPK instance for constants
  * @param {GenerateOptions} [options] - Generation options
  * @returns {LP} Generated problem
  */
@@ -92,7 +92,7 @@ export function generateLargeProblem(glpk, options = {}) {
 
 /**
  * Generate a large LP problem (legacy wrapper)
- * @param {GLPK} glpk - GLPK instance for constants
+ * @param {GLPKConstants} glpk - GLPK instance for constants
  * @param {number} numVars - Number of variables
  * @param {number} numConstraints - Number of constraints
  * @returns {LP} Generated LP problem
@@ -129,7 +129,7 @@ export function getMemoryUsage() {
 
 /**
  * Run memory test
- * @param {GLPK} glpk - GLPK instance
+ * @param {GLPKConstants} glpk - GLPK instance
  * @param {object} options - Test options
  * @param {number} [options.iterations=100] - Number of iterations
  * @param {number} [options.numVars=200] - Variables per problem
@@ -235,7 +235,7 @@ export async function runMemoryTest(glpk, options = {}) {
  * Run memory test with multiple parallel workers
  * Tests whether multiple GLPK instances can run independently without memory overlap
  *
- * @param {function(): Promise<import('../src/glpk.d.ts').GLPK>} GLPKFactory - Factory function to create GLPK instances
+ * @param {function(): Promise<GLPKConstants>} GLPKFactory - Factory function to create GLPK instances
  * @param {ParallelTestOptions} [options] - Test options
  * @returns {Promise<ParallelTestResult>} Test results
  */

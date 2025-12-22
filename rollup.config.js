@@ -6,7 +6,7 @@ import copy from 'rollup-plugin-copy';
 
 const cp = copy({
     targets: [
-        { src: 'src/glpk.d.ts', dest: 'dist' },
+        { src: 'src/*.d.ts', dest: 'dist' },
         { src: 'src/.build/glpk.wasm', dest: 'dist' }
     ]
 });

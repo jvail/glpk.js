@@ -6,8 +6,8 @@
  * - Verified optimal: 60,000 (glpsol)
  * - 104 iterations, max objective ~3,480,000
  *
- * @typedef {import('../dist/glpk.d.ts').GLPK} GLPK
- * @typedef {import('../dist/glpk.d.ts').LP} LP
+ * @typedef {import('../dist/index.d.ts').GLPK} GLPK
+ * @typedef {import('../dist/index.d.ts').LP} LP
  */
 
 import GLPK from '../dist/index.js';
