@@ -106,13 +106,18 @@ Optionally the "kind of structural variable"
 may be specified with an array of variable names:
 
 ```js
-  /* integer */
-  lp.generals = ['x1', 'x2'];
+/* integer */
+lp.generals = ['x1', 'x2'];
 
-  /* binary */
-  lp.binaries = ['x3', 'x4'];
+/* binary */
+lp.binaries = ['x3', 'x4'];
 ```
 
+```ts
+/* typescript node import */
+import GLPK, { type LP, type Options, type Result } from 'glpk.js/node';
+glpk = await GLPK()
+```
 
 For full TypeScript definitions, see:
 - [src/types.d.ts](src/types.d.ts) - shared types (`LP`, `Options`, `Result`)
