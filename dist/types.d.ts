@@ -28,7 +28,7 @@ export interface Options {
     presol?: boolean; /* use presolver, default true */
     rows?: boolean; /* include constraint/row values in result, default false */
     cb?: {
-        /* callback called at each 'each' iteration (LP only, ignored for MIP) */
+        /* callback called at each 'each' iteration (LP only, ignored for MIP). Note: presol is disabled when cb is supplied. */
         call(result: Result): void;
         each: number;
     };

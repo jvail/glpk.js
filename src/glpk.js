@@ -47,13 +47,10 @@ const glpk = async function (options = null) {
 
     const glp_version = cwrap('glp_version', 'string', []),
         glp_create_prob = cwrap('glp_create_prob', 'void', []),
-        glp_erase_prob = cwrap('glp_erase_prob', 'void', ['number']),
         glp_delete_prob = cwrap('glp_delete_prob', 'void', ['number']),
-        glp_create_index = cwrap('glp_create_index', 'void', ['number']),
         glp_set_prob_name = cwrap('glp_set_prob_name', 'void', ['number', 'string']),
         glp_get_prob_name = cwrap('glp_get_prob_name', 'string', ['number']),
         glp_set_obj_dir = cwrap('glp_set_obj_dir', 'void', ['number', 'number']),
-        glp_find_col = cwrap('glp_find_col', 'number', ['number', 'string']),
         glp_set_col_bnds = cwrap('glp_set_col_bnds', 'void', [
             'number',
             'number',
@@ -73,17 +70,9 @@ const glpk = async function (options = null) {
         glp_add_cols = cwrap('glp_add_cols', 'number', ['number', 'number']),
         glp_set_row_name = cwrap('glp_set_row_name', 'void', ['number', 'number', 'string']),
         glp_set_col_name = cwrap('glp_set_col_name', 'void', ['number', 'number', 'string']),
-        glp_set_mat_row = cwrap('glp_set_mat_row', 'void', [
-            'number',
-            'number',
-            'number',
-            'number',
-            'number'
-        ]),
         glp_set_col_kind = cwrap('glp_set_col_kind', 'void', ['number', 'number', 'number']),
         glp_get_col_lb = cwrap('glp_get_col_lb', 'number', ['number', 'number']),
         glp_get_col_ub = cwrap('glp_get_col_ub', 'number', ['number', 'number']),
-        glp_delete_index = cwrap('glp_delete_index', 'void', ['number']),
         glp_sort_matrix = cwrap('glp_sort_matrix', 'void', ['number']),
         glp_get_num_int = cwrap('glp_get_num_int', 'number', ['number']),
         glp_get_num_bin = cwrap('glp_get_num_bin', 'number', ['number']),
@@ -110,7 +99,14 @@ const glpk = async function (options = null) {
             'number'
         ]),
         get_glp_smcp = cwrap('get_glp_smcp', 'number', ['number', 'number', 'number', 'number']),
-        solve_lp_itlim = cwrap('solve_lp_itlim', 'number', ['number', 'number']);
+        solve_lp_itlim = cwrap('solve_lp_itlim', 'number', ['number', 'number']),
+        glp_load_matrix = cwrap('glp_load_matrix', 'void', [
+            'number', // P (problem pointer)
+            'number', // ne (number of non-zero elements)
+            'number', // ia (row indices pointer)
+            'number', // ja (column indices pointer)
+            'number' // ar (coefficient values pointer)
+        ]);
 
     const DBL_MAX = Number.MAX_VALUE;
     const INT_MAX = 2147483647;
@@ -146,90 +142,126 @@ const glpk = async function (options = null) {
     const GLP_UNBND = 6; /* solution is unbounded */
 
     /**
-     * Find or create a column by name
-     * @param {number} P - Problem pointer
-     * @param {string} name - Column name
-     * @returns {number} Column index
-     */
-    const find_col = (P, name) => {
-        let j = glp_find_col(P, name);
-        if (j === 0) {
-            j = glp_add_cols(P, 1);
-            glp_set_col_name(P, j, name);
-            glp_set_col_bnds(P, j, GLP_FX, +DBL_MAX, -DBL_MAX);
-        }
-        return j;
-    };
-
-    /**
      * Set up the LP problem from the input structure
+     * Uses batch operations and glp_load_matrix for optimal performance
      * @param {LP} lp - Linear program definition
      * @returns {number} Problem pointer
      */
     const setup = (lp) => {
-        let j, jj, ub, lb, type;
         const P = glp_create_prob();
-        glp_erase_prob(P);
-        glp_create_index(P);
         glp_set_prob_name(P, lp.name);
         glp_set_obj_dir(P, lp.objective.direction);
 
-        lp.objective.vars.forEach((o) => {
-            let col = find_col(P, o.name);
-            glp_set_col_bnds(P, col, GLP_LO, 0, 0);
-            glp_set_obj_coef(P, col, o.coef);
+        // 1. Collect all unique column names and build JS index
+        const colNames = new Map(); // name -> index (1-based)
+        let colNum = 1;
+        const addCol = (name) => {
+            if (!colNames.has(name)) {
+                colNames.set(name, colNum++);
+            }
+        };
+        lp.objective.vars.forEach((v) => addCol(v.name));
+        lp.subjectTo.forEach((c) => c.vars.forEach((v) => addCol(v.name)));
+        // Also include variables from bounds, generals, binaries that might not appear elsewhere
+        if (lp.bounds) {
+            lp.bounds.forEach((b) => addCol(b.name));
+        }
+        if (lp.generals) {
+            lp.generals.forEach((name) => addCol(name));
+        }
+        if (lp.binaries) {
+            lp.binaries.forEach((name) => addCol(name));
+        }
+
+        // 2. Add all columns and rows at once
+        const numCols = colNames.size;
+        const numRows = lp.subjectTo.length;
+        glp_add_cols(P, numCols);
+        if (numRows > 0) {
+            glp_add_rows(P, numRows);
+        }
+
+        // 3. Set column names and default bounds (lower bound 0)
+        for (const [name, idx] of colNames) {
+            glp_set_col_name(P, idx, name);
+            glp_set_col_bnds(P, idx, GLP_FX, +DBL_MAX, -DBL_MAX); // Marker for "unset"
+        }
+
+        // 4. Set objective coefficients
+        lp.objective.vars.forEach((v) => {
+            glp_set_obj_coef(P, colNames.get(v.name), v.coef);
         });
 
-        lp.subjectTo.forEach((c) => {
-            let vars = c.vars,
-                bnds = c.bnds,
-                ind = [null],
-                val = [null],
-                row;
-            vars.forEach((v, i) => {
-                ind[i + 1] = find_col(P, v.name);
-                val[i + 1] = v.coef;
+        // 5. Set row names and bounds
+        lp.subjectTo.forEach((c, i) => {
+            const row = i + 1;
+            glp_set_row_name(P, row, c.name);
+            glp_set_row_bnds(P, row, c.bnds.type, c.bnds.lb, c.bnds.ub);
+        });
+
+        // 6. Build COO matrix and load at once
+        let ne = 0;
+        lp.subjectTo.forEach((c) => (ne += c.vars.length));
+
+        if (ne > 0) {
+            const ia = new Int32Array(ne + 1); // 1-indexed, element 0 unused
+            const ja = new Int32Array(ne + 1);
+            const ar = new Float64Array(ne + 1);
+
+            let idx = 1;
+            lp.subjectTo.forEach((c, rowIdx) => {
+                const row = rowIdx + 1;
+                c.vars.forEach((v) => {
+                    ia[idx] = row;
+                    ja[idx] = colNames.get(v.name);
+                    ar[idx] = v.coef;
+                    idx++;
+                });
             });
 
-            const ind_ptr = _malloc(ind.length * 4);
-            const val_ptr = _malloc(val.length * 8);
+            // Single allocation for all matrix data
+            const ia_ptr = _malloc(ia.byteLength);
+            const ja_ptr = _malloc(ja.byteLength);
+            const ar_ptr = _malloc(ar.byteLength);
 
-            writeArrayToMemory(new Uint8Array(new Int32Array(ind).buffer), ind_ptr);
-            writeArrayToMemory(new Uint8Array(new Float64Array(val).buffer), val_ptr);
+            // Use writeArrayToMemory (safe with memory growth)
+            writeArrayToMemory(new Uint8Array(ia.buffer), ia_ptr);
+            writeArrayToMemory(new Uint8Array(ja.buffer), ja_ptr);
+            writeArrayToMemory(new Uint8Array(ar.buffer), ar_ptr);
 
-            row = glp_add_rows(P, 1);
-            glp_set_row_name(P, row, c.name);
-            glp_set_mat_row(P, row, vars.length, ind_ptr, val_ptr);
-            glp_set_row_bnds(P, row, bnds.type, bnds.lb, bnds.ub);
+            glp_load_matrix(P, ne, ia_ptr, ja_ptr, ar_ptr);
 
-            _free(ind_ptr);
-            _free(val_ptr);
-        });
+            _free(ia_ptr);
+            _free(ja_ptr);
+            _free(ar_ptr);
+        }
 
+        // 7. Handle custom bounds
         if (lp.bounds) {
             lp.bounds.forEach((b) => {
-                glp_set_col_bnds(P, find_col(P, b.name), b.type, b.lb, b.ub);
+                glp_set_col_bnds(P, colNames.get(b.name), b.type, b.lb, b.ub);
             });
         }
 
+        // 8. Set integer/binary variables
         if (lp.generals) {
             lp.generals.forEach((name) => {
-                glp_set_col_kind(P, find_col(P, name), GLP_IV);
+                glp_set_col_kind(P, colNames.get(name), GLP_IV);
             });
         }
-
         if (lp.binaries) {
             lp.binaries.forEach((name) => {
-                glp_set_col_kind(P, find_col(P, name), GLP_BV);
+                glp_set_col_kind(P, colNames.get(name), GLP_BV);
             });
         }
 
-        /* set bounds of variables */
-        for (j = 1, jj = glp_get_num_cols(P); j <= jj; j++) {
-            lb = glp_get_col_lb(P, j);
-            ub = glp_get_col_ub(P, j);
-            if (lb === +DBL_MAX) lb = 0.0; /* default lb */
-            if (ub === -DBL_MAX) ub = +DBL_MAX; /* default ub */
+        // 9. Finalize bounds: set defaults for columns not explicitly bounded
+        for (let j = 1; j <= numCols; j++) {
+            let lb = glp_get_col_lb(P, j);
+            let ub = glp_get_col_ub(P, j);
+            if (lb === +DBL_MAX) lb = 0.0; // default lb
+            if (ub === -DBL_MAX) ub = +DBL_MAX; // default ub
+            let type;
             if (lb === -DBL_MAX && ub === +DBL_MAX) type = GLP_FR;
             else if (ub === +DBL_MAX) type = GLP_LO;
             else if (lb === -DBL_MAX) type = GLP_UP;
@@ -238,8 +270,6 @@ const glpk = async function (options = null) {
             glp_set_col_bnds(P, j, type, lb, ub);
         }
 
-        /* problem data has been successfully read */
-        glp_delete_index(P);
         glp_sort_matrix(P);
 
         return P;

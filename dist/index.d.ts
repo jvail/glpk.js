@@ -1,5 +1,5 @@
-export { LP, Options, Result } from './types.js';
 import type { LP, Options, Result, GLPKConstants } from './types.js';
+export type { LP, Options, Result };
 
 /** Asynchronous GLPK interface (Browser with web worker) */
 export interface GLPK extends GLPKConstants {

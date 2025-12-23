@@ -1,5 +1,5 @@
-export { LP, Options, Result } from './types.js';
 import type { LP, Options, Result, GLPKConstants } from './types.js';
+export type { LP, Options, Result };
 
 /** Synchronous GLPK interface (Node.js) */
 export interface GLPK extends GLPKConstants {

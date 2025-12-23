@@ -11,13 +11,10 @@ EMCC_FLAGS += -s ENVIRONMENT="node,worker"
 EMCC_FLAGS += -s EXPORTED_FUNCTIONS="[ \
 	'_glp_version', \
 	'_glp_create_prob', \
-	'_glp_erase_prob', \
 	'_glp_delete_prob', \
-	'_glp_create_index', \
 	'_glp_set_prob_name', \
 	'_glp_get_prob_name', \
 	'_glp_set_obj_dir', \
-	'_glp_find_col', \
 	'_glp_set_col_bnds', \
 	'_glp_set_row_bnds', \
 	'_glp_set_obj_coef', \
@@ -25,11 +22,10 @@ EMCC_FLAGS += -s EXPORTED_FUNCTIONS="[ \
 	'_glp_add_cols', \
 	'_glp_set_row_name', \
 	'_glp_set_col_name', \
-	'_glp_set_mat_row', \
+	'_glp_load_matrix', \
 	'_glp_set_col_kind', \
 	'_glp_get_col_lb', \
 	'_glp_get_col_ub', \
-	'_glp_delete_index', \
 	'_glp_sort_matrix', \
 	'_glp_get_num_int', \
 	'_glp_get_num_bin', \
@@ -46,7 +42,6 @@ EMCC_FLAGS += -s EXPORTED_FUNCTIONS="[ \
 	'_glp_get_row_prim', \
 	'_glp_get_row_dual', \
 	'_glp_mip_row_val', \
-	'_glp_delete_prob', \
 	'_glp_write_lp', \
 	'_glp_simplex', \
 	'_free', \
@@ -61,12 +56,12 @@ glpk:
 	mkdir -p src/.build; \
 	cd $(PWD)/src/glpk && \
 	autoreconf -fi && \
-	emconfigure ./configure --disable-shared --host=wasm32-unknown-emscripten && \
+	emconfigure ./configure --disable-shared --host=wasm32-unknown-emscripten CFLAGS="-Os -Wno-deprecated-non-prototype" && \
 	emmake make -j4 \
 
 js: src/pre.js src/glpk.js.c
 	cd $(PWD); \
-	emcc -Os -g0 $(EMCC_FLAGS) -s EXPORTED_RUNTIME_METHODS="[cwrap, writeArrayToMemory]" \
+	emcc -Os $(EMCC_FLAGS) -s EXPORTED_RUNTIME_METHODS="[cwrap, writeArrayToMemory]" \
 	-Isrc/glpk/src \
 	--pre-js src/pre.js \
 	src/glpk/src/.libs/libglpk.a \
