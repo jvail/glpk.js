@@ -3,7 +3,7 @@
   "version": "5.0.0-pre.1",
   "type": "module",
   "engines": {
-    "node": ">=24"
+    "node": ">=20"
   },
   "description": "GLPK for node & browser",
   "keywords": [
