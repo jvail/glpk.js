@@ -2,6 +2,7 @@ EMCC_FLAGS :=
 EMCC_FLAGS += -s RETAIN_COMPILER_SETTINGS=1
 EMCC_FLAGS += -s INITIAL_MEMORY=16MB
 EMCC_FLAGS += -s ALLOW_MEMORY_GROWTH=1
+EMCC_FLAGS += -s ALLOW_TABLE_GROWTH=1
 EMCC_FLAGS += -s EXPORT_ES6=1
 EMCC_FLAGS += -s ASSERTIONS=0
 EMCC_FLAGS += -s EXPORT_NAME="GLPK"
@@ -42,6 +43,8 @@ EMCC_FLAGS += -s EXPORTED_FUNCTIONS="[ \
 	'_glp_get_row_prim', \
 	'_glp_get_row_dual', \
 	'_glp_mip_row_val', \
+	'_glp_ios_reason', \
+	'_glp_ios_mip_gap', \
 	'_glp_write_lp', \
 	'_glp_simplex', \
 	'_free', \
@@ -61,7 +64,7 @@ glpk:
 
 js: src/pre.js src/glpk.js.c
 	cd $(PWD); \
-	emcc -Os $(EMCC_FLAGS) -s EXPORTED_RUNTIME_METHODS="[cwrap, writeArrayToMemory]" \
+	emcc -Os $(EMCC_FLAGS) -s EXPORTED_RUNTIME_METHODS="[cwrap, writeArrayToMemory, addFunction, removeFunction]" \
 	-Isrc/glpk/src \
 	--pre-js src/pre.js \
 	src/glpk/src/.libs/libglpk.a \

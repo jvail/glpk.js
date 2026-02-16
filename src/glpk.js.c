@@ -41,6 +41,21 @@ int EMSCRIPTEN_KEEPALIVE solve_mip(glp_prob *P, int msg_lev, int tm_lim, int pre
     return glp_intopt(P, &parm);
 }
 
+typedef void (*mip_cb_func)(glp_tree *T, void *info);
+
+int EMSCRIPTEN_KEEPALIVE solve_mip_with_cb(glp_prob *P, int msg_lev, int tm_lim,
+    int presolve, double mip_gap, mip_cb_func cb_func) {
+    glp_iocp parm;
+    glp_init_iocp(&parm);
+    parm.msg_lev = msg_lev;
+    parm.tm_lim = tm_lim;
+    parm.presolve = presolve;
+    parm.mip_gap = mip_gap;
+    parm.cb_func = cb_func;
+    parm.cb_info = NULL;
+    return glp_intopt(P, &parm);
+}
+
 #ifdef __cplusplus
 }
 #endif
