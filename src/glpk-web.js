@@ -137,7 +137,11 @@ const glpk = function (wkr, flags) {
      */
     const post = (msg, cb = {}) => {
         return new Promise((resolve, reject) => {
-            msg.cb = cb.each;
+            if (cb.each) {
+                msg.cb = cb.each; // LP: iteration frequency
+            } else if (cb.call) {
+                msg.cb = { mip: true, solutions: !!cb.solutions };
+            }
             work.push({ resolve, reject, cb: cb.call });
             wkr.postMessage(msg);
         });
@@ -150,7 +154,17 @@ const glpk = function (wkr, flags) {
             err.name = error.name;
             work.shift().reject(err);
         } else if (cb) {
-            work[0].cb(cb);
+            if (cb.mipgap !== undefined) {
+                // MIP callback result
+                const { reason, status, z, mipgap, vars, rows } = cb;
+                const result = { reason, status, z, mipgap };
+                if (vars !== undefined) {
+                    result.getSolution = () => ({ vars, rows });
+                }
+                work[0].cb(result);
+            } else {
+                work[0].cb(cb);
+            }
         } else {
             work.shift().resolve(res);
         }

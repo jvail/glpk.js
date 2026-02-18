@@ -31,6 +31,10 @@ export interface Options {
         /* callback called at each 'each' iteration (LP only, ignored for MIP). Note: presol is disabled when cb is supplied. */
         call(result: Result): void;
         each: number;
+    } | {
+        /* Called when the MIP solver finds a better integer feasible solution */
+        call(result: MIPCallbackResult): void;
+        solutions?: boolean; /* if true, getSolution() is available in the callback */
     };
 }
 
@@ -44,6 +48,15 @@ export interface Result {
         dual?: { [key: string]: number }; /* simplex only */
         rows?: { [key: string]: number }; /* constraint values, when rows option is true */
     };
+}
+
+export interface MIPCallbackResult {
+    reason: number; /* reason code (e.g. GLP_IBINGO) */
+    status: number;
+    z: number;
+    mipgap: number; /* relative MIP gap */
+    /** Returns the full solution (vars and optionally rows). Only available when solutions: true. Must be called synchronously during the callback. */
+    getSolution?(): { vars: { [key: string]: number }; rows?: { [key: string]: number } };
 }
 
 /** Base GLPK constants */
@@ -73,6 +86,15 @@ export interface GLPKConstants {
     readonly GLP_NOFEAS: number; /* no feasible solution exists */
     readonly GLP_OPT: number; /* solution is optimal */
     readonly GLP_UNBND: number; /* solution is unbounded */
+
+    /* reason codes for MIP callback: */
+    readonly GLP_IROWGEN: number; /* request for row generation */
+    readonly GLP_IBINGO: number; /* better integer solution found */
+    readonly GLP_IHEUR: number; /* request for heuristic solution */
+    readonly GLP_ICUTGEN: number; /* request for cut generation */
+    readonly GLP_IBRANCH: number; /* request for branching */
+    readonly GLP_ISELECT: number; /* request for subproblem selection */
+    readonly GLP_IPREPRO: number; /* request for preprocessing */
 
     version: string; /* GLPK version */
 }

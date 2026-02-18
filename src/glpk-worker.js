@@ -45,7 +45,27 @@ self.onmessage = async function (evt) {
             const { cmd, lp, opt, cb } = /** @type {WorkerCommand} */ (evt.data);
             switch (cmd) {
                 case 'solve':
-                    if (cb) {
+                    if (cb && typeof cb === 'object' && cb.mip) {
+                        // MIP callback
+                        opt.cb = {
+                            call: (res) => {
+                                const data = {
+                                    reason: res.reason,
+                                    status: res.status,
+                                    z: res.z,
+                                    mipgap: res.mipgap,
+                                };
+                                if (cb.solutions && res.getSolution) {
+                                    const { vars, rows } = res.getSolution();
+                                    data.vars = vars;
+                                    data.rows = rows;
+                                }
+                                postMessage({ cb: data });
+                            },
+                            solutions: cb.solutions
+                        };
+                    } else if (cb) {
+                        // LP callback
                         opt.cb = {
                             call: (res) => {
                                 postMessage({ cb: res });

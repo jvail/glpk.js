@@ -43,7 +43,7 @@ const glpk = async function (options = null) {
 
     const Module = await GLPKModule(moduleOptions);
 
-    const { cwrap, _free, _malloc, FS, writeArrayToMemory } = Module;
+    const { cwrap, _free, _malloc, FS, writeArrayToMemory, addFunction, removeFunction } = Module;
 
     const glp_version = cwrap('glp_version', 'string', []),
         glp_create_prob = cwrap('glp_create_prob', 'void', []),
@@ -100,6 +100,16 @@ const glpk = async function (options = null) {
         ]),
         get_glp_smcp = cwrap('get_glp_smcp', 'number', ['number', 'number', 'number', 'number']),
         solve_lp_itlim = cwrap('solve_lp_itlim', 'number', ['number', 'number']),
+        glp_ios_reason = cwrap('glp_ios_reason', 'number', ['number']),
+        glp_ios_mip_gap = cwrap('glp_ios_mip_gap', 'number', ['number']),
+        solve_mip_with_cb = cwrap('solve_mip_with_cb', 'number', [
+            'number',
+            'number',
+            'number',
+            'number',
+            'number',
+            'number'
+        ]),
         glp_load_matrix = cwrap('glp_load_matrix', 'void', [
             'number', // P (problem pointer)
             'number', // ne (number of non-zero elements)
@@ -140,6 +150,15 @@ const glpk = async function (options = null) {
     const GLP_NOFEAS = 4; /* no feasible solution exists */
     const GLP_OPT = 5; /* solution is optimal */
     const GLP_UNBND = 6; /* solution is unbounded */
+
+    /* reason codes for MIP callback: */
+    const GLP_IROWGEN = 0x01; /* request for row generation */
+    const GLP_IBINGO = 0x02; /* better integer feasible solution found */
+    const GLP_IHEUR = 0x03; /* request for heuristic solution */
+    const GLP_ICUTGEN = 0x04; /* request for cut generation */
+    const GLP_IBRANCH = 0x05; /* request for branching */
+    const GLP_ISELECT = 0x06; /* request for subproblem selection */
+    const GLP_IPREPRO = 0x07; /* request for preprocessing */
 
     /**
      * Set up the LP problem from the input structure
@@ -280,16 +299,50 @@ const glpk = async function (options = null) {
      * @param {number} P - Problem pointer
      * @param {SolveResult} ret - Result object to populate
      * @param {InternalOptions} opt - Solver options
+     * @param {string} name - Problem name
+     * @param {number} start - Start time in ms
      */
-    const solve = (P, ret, opt) => {
+    const solve = (P, ret, opt, name, start) => {
         // this condition checks if the problem has binary or int columns
         if (glp_get_num_int(P) || glp_get_num_bin(P)) {
-            solve_mip(P, opt.msglev, opt.tmlim, opt.presol, opt.mipgap);
+            if (opt.cb && opt.cb.call && typeof opt.cb.call === 'function') {
+                const call = opt.cb.call;
+                const wantSolutions = !!opt.cb.solutions;
+                const cbPtr = addFunction((T, _info) => {
+                    if (glp_ios_reason(T) === GLP_IBINGO) {
+                        const result = {
+                            reason: glp_ios_reason(T),
+                            status: glp_mip_status(P),
+                            z: glp_mip_obj_val(P),
+                            mipgap: glp_ios_mip_gap(T),
+                        };
+                        if (wantSolutions) {
+                            let active = true;
+                            result.getSolution = () => {
+                                if (!active) throw new Error('getSolution() must be called during the callback');
+                                return {
+                                    vars: get_mip_vars(P),
+                                    rows: opt.rows ? get_mip_rows(P) : undefined,
+                                };
+                            };
+                            call(result);
+                            active = false;
+                        } else {
+                            call(result);
+                        }
+                    }
+                }, 'vii');
+                try {
+                    solve_mip_with_cb(P, opt.msglev, opt.tmlim, opt.presol, opt.mipgap, cbPtr);
+                } finally {
+                    removeFunction(cbPtr);
+                }
+            } else {
+                solve_mip(P, opt.msglev, opt.tmlim, opt.presol, opt.mipgap);
+            }
             ret.status = glp_mip_status(P);
             ret.z = glp_mip_obj_val(P);
-            for (let i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {
-                ret.vars[glp_get_col_name(P, i)] = glp_mip_col_val(P, i);
-            }
+            ret.vars = get_mip_vars(P);
             if (opt.rows) {
                 ret.rows = get_mip_rows(P);
             }
@@ -311,7 +364,11 @@ const glpk = async function (options = null) {
                             dual: get_dual(P),
                             rows: opt.rows ? get_rows(P) : undefined
                         };
-                        call(_ret);
+                        call({
+                            name,
+                            time: (new Date().getTime() - start) / 1000,
+                            result: _ret
+                        });
                         if (
                             status === GLP_OPT ||
                             status === GLP_NOFEAS ||
@@ -384,6 +441,19 @@ const glpk = async function (options = null) {
     }
 
     /**
+     * Get MIP variable values from solution
+     * @param {number} P - Problem pointer
+     * @returns {{[key: string]: number}} Variable values by name
+     */
+    function get_mip_vars(P) {
+        const vars = {};
+        for (let i = 1, ii = glp_get_num_cols(P); i < ii + 1; i++) {
+            vars[glp_get_col_name(P, i)] = glp_mip_col_val(P, i);
+        }
+        return vars;
+    }
+
+    /**
      * Get row/constraint values from MIP solution
      * @param {number} P - Problem pointer
      * @returns {{[key: string]: number}} Row values by constraint name
@@ -430,6 +500,15 @@ const glpk = async function (options = null) {
         GLP_NOFEAS,
         GLP_OPT,
         GLP_UNBND,
+
+        /* reason codes for MIP callback: */
+        GLP_IROWGEN,
+        GLP_IBINGO,
+        GLP_IHEUR,
+        GLP_ICUTGEN,
+        GLP_IBRANCH,
+        GLP_ISELECT,
+        GLP_IPREPRO,
 
         version: glp_version(),
 
@@ -481,8 +560,9 @@ const glpk = async function (options = null) {
             };
 
             const P = setup(lp_);
+            const name = glp_get_prob_name(P);
             const ret = {
-                name: '',
+                name,
                 time: 0,
                 result: {
                     vars: {},
@@ -494,8 +574,7 @@ const glpk = async function (options = null) {
             const start = new Date().getTime();
 
             try {
-                solve(P, ret.result, options);
-                ret.name = glp_get_prob_name(P);
+                solve(P, ret.result, options, name, start);
                 ret.time = (new Date().getTime() - start) / 1000;
                 return ret;
             } finally {
